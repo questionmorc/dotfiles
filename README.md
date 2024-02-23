@@ -8,13 +8,13 @@ Ensure you have the following installed on your system
 
 ### Git
 
-`apt-get install git`
+`apt-get install git`  
 `brew install git`
 
 ### Stow
 
 
-`apt-get install stow`
+`apt-get install stow`  
 `brew install stow`
 
 ## Installation
