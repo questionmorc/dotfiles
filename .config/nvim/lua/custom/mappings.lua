@@ -50,6 +50,11 @@ M.gopher = {
   }
 }
 
+M.undotree = {
+  n = {
+    ["<leader>u"] = {vim.cmd.UndotreeToggle},
+  }
+}
 M.general = {
   n = {
     ["<C-h>"] = { "<cmd> TmuxNavigateLeft<CR>", "window left"},

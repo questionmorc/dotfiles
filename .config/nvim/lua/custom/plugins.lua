@@ -4,6 +4,21 @@ local plugins = {
     lazy = false
   },
   {
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate",
+    opts = function ()
+      return require "custom.configs.treesitter"
+    end,
+  },
+
+  {
+    "mbbill/undotree",
+    lazy = false,
+    init = function()
+      require("core.utils").load_mappings("undotree")
+    end
+  },
+  {
     "williamboman/mason.nvim",
     opts = {
       ensure_installed = {
