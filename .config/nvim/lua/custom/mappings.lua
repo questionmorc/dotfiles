@@ -57,6 +57,10 @@ M.undotree = {
 }
 M.general = {
   n = {
+    ["<C-d>"] = { "<C-d>zz" },
+    ["<C-u>"] = { "<C-u>zz" },
+    ["n"] = { "nzzzv" },
+    ["N"] = { "Nzzzv" },
     ["<C-h>"] = { "<cmd> TmuxNavigateLeft<CR>", "window left"},
     ["<C-l>"] = { "<cmd> TmuxNavigateRight<CR>", "window right"},
     ["<C-j>"] = { "<cmd> TmuxNavigateDown<CR>", "window down"},
