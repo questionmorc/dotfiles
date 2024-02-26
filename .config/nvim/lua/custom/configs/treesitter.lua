@@ -35,7 +35,6 @@ return {
     "terraform",
     "toml",
     "typescript",
-    "udev",
     "vim",
     "vimdoc",
     "xml",
