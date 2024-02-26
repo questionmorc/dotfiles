@@ -36,3 +36,15 @@ alias vi='nvim'
 
 eval "$(oh-my-posh init zsh --config '~/oh-my-posh-themes/mrrc.json')"
 alias config="/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME"
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f "$HOME/lib/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/lib/google-cloud-sdk/path.zsh.inc"; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f "$HOME/lib/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/lib/google-cloud-sdk/completion.zsh.inc"; fi
+
+path+=($HOME/bin)
+#export PATH=$PATH:$HOME/bin
+eval "$(mise activate zsh)"
+GOROOT="$HOME/.local/share/mise/installs/go/1.22.0"
+export LIBRARY_PATH=/opt/homebrew/lib
