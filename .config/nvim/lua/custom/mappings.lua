@@ -49,7 +49,11 @@ M.gopher = {
     }
   }
 }
-
+M.telescope = {
+  n = {
+    ["<leader>fg"] = {"<cmd>  Telescope git_files <CR>", "Find only files from git ls-files"},
+  }
+}
 M.undotree = {
   n = {
     ["<leader>u"] = {vim.cmd.UndotreeToggle},
