@@ -54,6 +54,11 @@ M.telescope = {
     ["<leader>fg"] = {"<cmd>  Telescope git_files <CR>", "Find only files from git ls-files"},
   }
 }
+M.fugitive = {
+  n = {
+    ["<leader>gs"] = {vim.cmd.Git},
+  }
+}
 M.undotree = {
   n = {
     ["<leader>u"] = {vim.cmd.UndotreeToggle},

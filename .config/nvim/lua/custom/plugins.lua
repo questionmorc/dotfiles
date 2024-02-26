@@ -71,12 +71,18 @@ local plugins = {
   },
   {
     "tpope/vim-fugitive",
-     opt = true,
-     cmd = {
-       "G", "Git", "Gdiffsplit", "Gvdiffsplit", "Gedit", "Gsplit",
-       "Gread", "Gwrite", "Ggrep", "Glgrep", "Gmove",
-       "Gdelete", "Gremove", "Gbrowse",
-     },
+    opts = function ()
+      return require "custom.configs.fugitive"
+    end,
+     -- opt = true,
+     -- config = function ()
+     --   return require "custom.configs.fugitive"
+     -- end,
+     -- cmd = {
+     --   "G", "Git", "Gdiffsplit", "Gvdiffsplit", "Gedit", "Gsplit",
+     --   "Gread", "Gwrite", "Ggrep", "Glgrep", "Gmove",
+     --   "Gdelete", "Gremove", "Gbrowse",
+     -- },
   },
 }
 return plugins
