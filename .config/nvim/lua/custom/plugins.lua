@@ -1,4 +1,8 @@
 local plugins = {
+  -- {
+  --   "fatih/vim-go",
+  --   ft = "go"
+  -- },
   {
     "ThePrimeagen/vim-be-good",
   },
@@ -25,7 +29,12 @@ local plugins = {
     "williamboman/mason.nvim",
     opts = {
       ensure_installed = {
-        "gopls"
+        "gopls",
+        "terraform-ls",
+        "golangci-lint",
+        "golangci-lint-langse",
+        "jsonnet-language-ser",
+        "lua-language-server ",
       }
     }
   },
