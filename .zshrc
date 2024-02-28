@@ -44,7 +44,12 @@ if [ -f "$HOME/lib/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/lib/google-cl
 if [ -f "$HOME/lib/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/lib/google-cloud-sdk/completion.zsh.inc"; fi
 
 path+=($HOME/bin)
+path+=($HOME/code/backend/platform/bin)
 #export PATH=$PATH:$HOME/bin
 eval "$(mise activate zsh)"
 GOROOT="$HOME/.local/share/mise/installs/go/1.22.0"
 export LIBRARY_PATH=/opt/homebrew/lib
+
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /opt/homebrew/bin/terragrunt terragrunt
