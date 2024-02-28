@@ -20,3 +20,19 @@ lspconfig.gopls.setup {
     },
   },
 }
+lspconfig.terraformls.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  cmd = {"terraform-ls", "serve"},
+  filetypes = {"terraform", "terraform-vars"},
+  root_dir = util.root_pattern(".terraform", ".git"),
+}
+
+lspconfig.jsonnet_ls.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  cmd = {"jsonnet-language-server"},
+  filetypes = {"jsonnet", "libsonnet"},
+  root_dir = util.root_pattern("jsonnetfile.json", ".git"),
+  single_file_support = true
+}
