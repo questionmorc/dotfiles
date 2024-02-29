@@ -14,7 +14,8 @@ local plugins = {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     opts = function ()
-      return require "custom.configs.treesitter"
+      require "plugins.configs.treesitter"
+      require "custom.configs.treesitter"
     end,
   },
 
@@ -61,8 +62,9 @@ local plugins = {
     end,
   },
   {
-    "jose-elias-alvarez/null-ls.nvim",
-    ft = "go",
+    "nvimtools/none-ls.nvim",
+    ft = {"go","terraform", "tf", "terraform-vars"},
+    dependencies = "nvim-lua/plenary.nvim",
     opts = function ()
       return require "custom.configs.null-ls"
     end,
