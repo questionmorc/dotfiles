@@ -63,7 +63,7 @@ local plugins = {
   },
   {
     "nvimtools/none-ls.nvim",
-    ft = {"go","terraform", "tf", "terraform-vars"},
+    ft = {"go","terraform", "tf", "terraform-vars", "hcl"},
     dependencies = "nvim-lua/plenary.nvim",
     opts = function ()
       return require "custom.configs.null-ls"
