@@ -5,14 +5,11 @@ local opts = {
   debug = true,
   sources = {
     null_ls.builtins.formatting.gofumpt,
-    null_ls.builtins.formatting.goimports_reviser,
-    null_ls.builtins.formatting.golines,
+    -- null_ls.builtins.formatting.goimports_reviser,
+    -- null_ls.builtins.formatting.golines,
     null_ls.builtins.formatting.terraform_fmt,
-    null_ls.builtins.formatting.hclfmt.with({
-      command = "terragrunt hclfmt"
-    }),
     null_ls.builtins.diagnostics.terraform_validate,
-    null_ls.builtins.diagnostics.tfsec,
+    -- null_ls.builtins.diagnostics.tfsec,
   },
   on_attach = function(client, bufnr)
     if client.supports_method("textDocument/formatting") then
