@@ -59,6 +59,22 @@ M.fugitive = {
     ["<leader>gs"] = {vim.cmd.Git},
   }
 }
+-- local diagnostics_active = true
+-- local toggle_diagnostics = function()
+--     diagnostics_active = not diagnostics_active
+--     if diagnostics_active then
+--         vim.diagnostic.show()
+--   else
+--     vim.diagnostic.hide()
+--   end
+-- end
+--
+-- M.lsp = {
+--   n = {
+--     ["<leader>tt"] = {toggle_diagnostics(), "Toggle LSP diagnostics"},
+--   }
+-- }
+
 M.undotree = {
   n = {
     ["<leader>u"] = {vim.cmd.UndotreeToggle},
