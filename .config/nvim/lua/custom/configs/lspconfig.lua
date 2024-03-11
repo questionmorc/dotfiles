@@ -25,7 +25,7 @@ lspconfig.terraformls.setup {
   capabilities = capabilities,
   cmd = {"terraform-ls", "serve"},
   filetypes = {"terraform", "terraform-vars"},
-  root_dir = util.root_pattern(".terraform", ".git"),
+  root_dir = util.root_pattern(".terraform", ".terraform.lock.hcl"),
 }
 
 lspconfig.jsonnet_ls.setup {
