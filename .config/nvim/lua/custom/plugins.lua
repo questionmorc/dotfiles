@@ -1,5 +1,15 @@
 local plugins = {
   {
+    "nvim-telescope/telescope.nvim",
+    dependencies = {
+      "nvim-telescope/telescope-live-grep-args.nvim",
+      version = "^1.0.0",
+    },
+    opts = {
+      extensions_list = { "themes", "terms", "live_grep_args" }
+    }
+  },
+  {
     "towolf/vim-helm",
     ft = "helm"
   },
@@ -10,7 +20,7 @@ local plugins = {
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
-    opts = function ()
+    opts = function()
       require "plugins.configs.treesitter"
       require "custom.configs.treesitter"
     end,
@@ -38,7 +48,7 @@ local plugins = {
       }
     }
   },
-    {
+  {
     "mfussenegger/nvim-dap",
     init = function()
       require("core.utils").load_mappings("dap")
@@ -62,9 +72,9 @@ local plugins = {
   },
   {
     "nvimtools/none-ls.nvim",
-    ft = {"go","terraform", "tf", "terraform-vars", "hcl"},
+    ft = { "go", "terraform", "tf", "terraform-vars", "hcl" },
     dependencies = "nvim-lua/plenary.nvim",
-    opts = function ()
+    opts = function()
       return require "custom.configs.null-ls"
     end,
   },
@@ -81,7 +91,7 @@ local plugins = {
   },
   {
     "tpope/vim-fugitive",
-      lazy = false,
+    lazy = false,
   },
 }
 return plugins
