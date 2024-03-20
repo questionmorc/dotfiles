@@ -36,3 +36,12 @@ lspconfig.jsonnet_ls.setup {
   root_dir = util.root_pattern("jsonnetfile.json", ".git"),
   single_file_support = true
 }
+
+lspconfig.helm_ls.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  cmd = {"helm_ls", "serve"},
+  filetypes = {"helm"},
+  root_dir = util.root_pattern("Chart.yaml"),
+  single_file_support = true
+}

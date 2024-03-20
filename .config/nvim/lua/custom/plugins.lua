@@ -1,10 +1,7 @@
 local plugins = {
-  -- {
-  --   "fatih/vim-go",
-  --   ft = "go"
-  -- },
   {
-    "ThePrimeagen/vim-be-good",
+    "towolf/vim-helm",
+    ft = "helm"
   },
   {
     "christoomey/vim-tmux-navigator",
@@ -33,9 +30,11 @@ local plugins = {
         "gopls",
         "terraform-ls",
         "golangci-lint",
-        "golangci-lint-langse",
-        "jsonnet-language-ser",
+        "golangci-lint-langserver",
+        "jsonnet-language-server",
         "lua-language-server ",
+        "jsonnetfmt",
+        "helm-ls",
       }
     }
   },
