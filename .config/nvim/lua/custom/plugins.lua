@@ -5,9 +5,14 @@ local plugins = {
       "nvim-telescope/telescope-live-grep-args.nvim",
       version = "^1.0.0",
     },
-    opts = {
-      extensions_list = { "themes", "terms", "live_grep_args" }
-    }
+    -- opts = {
+    --   extensions_list = { "themes", "terms", "live_grep_args" }
+    -- }
+
+    opts = function()
+      require "plugins.configs.telescope"
+      require "custom.configs.telescope"
+    end,
   },
   {
     "towolf/vim-helm",
