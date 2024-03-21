@@ -8,7 +8,7 @@ M.dap = {
       "Add breakpoint at line"
     },
     ["<leader>dus"] = {
-      function ()
+      function()
         local widgets = require('dap.ui.widgets');
         local sidebar = widgets.sidebar(widgets.scopes);
         sidebar.open();
@@ -52,18 +52,18 @@ M.gopher = {
 M.telescope = {
   n = {
     -- ["<leader>fg"] = {"<cmd>  Telescope git_files <CR>", "Find only files from git ls-files"},
-    ["<leader>fg"] = {":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>", "Grep with args"},
-    ["<leader>fp"] = {":lua require'telescope'.extensions.project.project{}<CR>", "Open Telescope Projects"},
-    ["<leader>fb"] = {":Telescope file_browser<CR>", "Open Telescope File Browser"},
-    ["<leader>tt"] = {":Telescope terraform_doc<CR>", "Open Terraform docs"},
-    ["<leader>tg"] = {":Telescope terraform_doc full_name=hashicorp/google<CR>", "Open Terraform docs"},
+    ["<leader>fg"] = { ":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>", "Grep with args", opts = { silent = true } },
+    ["<leader>fp"] = { ":lua require'telescope'.extensions.project.project{}<CR>", "Open Telescope Projects", opts = { silent = true } },
+    ["<leader>fb"] = { ":Telescope file_browser<CR>", "Open Telescope File Browser", opts = { silent = true } },
+    ["<leader>tt"] = { ":Telescope terraform_doc<CR>", "Open Terraform docs", opts = { silent = true } },
+    ["<leader>tg"] = { ":Telescope terraform_doc full_name=hashicorp/google<CR>", "Open Terraform docs", opts = { silent = true } },
 
 
   }
 }
 M.fugitive = {
   n = {
-    ["<leader>gs"] = {vim.cmd.Git},
+    ["<leader>gs"] = { vim.cmd.Git },
   }
 }
 -- local diagnostics_active = true
@@ -84,7 +84,7 @@ M.fugitive = {
 
 M.undotree = {
   n = {
-    ["<leader>u"] = {vim.cmd.UndotreeToggle},
+    ["<leader>u"] = { vim.cmd.UndotreeToggle },
   }
 }
 M.general = {
@@ -93,10 +93,10 @@ M.general = {
     ["<C-u>"] = { "<C-u>zz" },
     ["n"] = { "nzzzv" },
     ["N"] = { "Nzzzv" },
-    ["<C-h>"] = { "<cmd> TmuxNavigateLeft<CR>", "window left"},
-    ["<C-l>"] = { "<cmd> TmuxNavigateRight<CR>", "window right"},
-    ["<C-j>"] = { "<cmd> TmuxNavigateDown<CR>", "window down"},
-    ["<C-k>"] = { "<cmd> TmuxNavigateUp<CR>", "window up"},
+    ["<C-h>"] = { "<cmd> TmuxNavigateLeft<CR>", "window left" },
+    ["<C-l>"] = { "<cmd> TmuxNavigateRight<CR>", "window right" },
+    ["<C-j>"] = { "<cmd> TmuxNavigateDown<CR>", "window down" },
+    ["<C-k>"] = { "<cmd> TmuxNavigateUp<CR>", "window up" },
   }
 }
 return M

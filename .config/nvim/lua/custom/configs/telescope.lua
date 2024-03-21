@@ -1,6 +1,6 @@
 -- local telescope = require("telescope")
 local lga_actions = require("telescope-live-grep-args.actions")
-local project_actions = require("telescope._extensions.project.actions")
+-- local project_actions = require("telescope._extensions.project.actions")
 
 local opts = {
   extensions_list = {
@@ -13,16 +13,11 @@ local opts = {
   },
   extensions = {
     projects = {},
-    file_browser = {
-      theme = "catppuccin"
-    },
+    file_browser = {},
     terraform_doc = {
-      url_open_command = vim.fn.has("macunix") and "open" or "xdg-open",
-      latest_provider_symbol = "  ",
-      wincmd = "botright vnew",
-      wrap = "nowrap",
+      url_open_command = "<cmd> firefox"
     },
-    live_grap_args = {
+    live_grep_args = {
       auto_quoting = true,
       mappings = {
         i = {
