@@ -53,6 +53,7 @@ M.telescope = {
   n = {
     -- ["<leader>fg"] = {"<cmd>  Telescope git_files <CR>", "Find only files from git ls-files"},
     ["<leader>fg"] = {":lua require('telescope').extensions.live_grep_args.live_grep_args()<CR>", "Grep with args"},
+    ["<leader>fp"] = {":lua require'telescope'.extensions.project.project{}<CR>", "Open Telescope Projects"},
   }
 }
 M.fugitive = {

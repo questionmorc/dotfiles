@@ -3,6 +3,7 @@ local plugins = {
     "nvim-telescope/telescope.nvim",
     dependencies = {
       "nvim-telescope/telescope-live-grep-args.nvim",
+      "nvim-telescope/telescope-project.nvim",
       version = "^1.0.0",
     },
     -- opts = {
