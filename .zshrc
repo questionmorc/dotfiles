@@ -30,6 +30,7 @@ if [ -f "$HOME/lib/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/lib/google-cl
 if [ -f "$HOME/lib/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/lib/google-cloud-sdk/completion.zsh.inc"; fi
 
 path+=($HOME/bin)
+path+=($HOME/.bin)
 path+=($HOME/code/backend/platform/bin)
 path+=(/opt/homebrew/Cellar/mysql-client/8.3.0/bin)
 #export PATH=$PATH:$HOME/bin
@@ -47,3 +48,9 @@ eval "$(zoxide init --cmd cd zsh)"
 #alias ll="exa -lgah"
 #alias tree="exa --tree"
 export KUBE_EDITOR=nvim
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /Users/malloul/.local/share/mise/installs/tanka/latest/bin/tk tk
+# Bash/ZSH example using less
+export PAGER="less"
+fpath=(~/.zsh.d/ $fpath)
