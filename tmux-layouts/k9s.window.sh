@@ -13,7 +13,7 @@ split_v 10
 
 # Run commands.
 #run_cmd "top"     # runs in active pane
-run_cmd "echo this is k9s" 1  # runs in pane 1
+run_cmd "k9s" 1  # runs in pane 1
 
 # Paste text
 #send_keys "top"    # paste into active pane

@@ -54,3 +54,9 @@ complete -o nospace -C /Users/malloul/.local/share/mise/installs/tanka/latest/bi
 # Bash/ZSH example using less
 export PAGER="less"
 fpath=(~/.zsh.d/ $fpath)
+
+export EDITOR=nvim
+path+=($HOME/.tmux/plugins/tmuxifier/bin)
+export TMUXIFIER_LAYOUT_PATH="$HOME/dotfiles/tmux-layouts"
+#export TMUXIFIER_TMUX_ITERM_ATTACH="-CC"
+eval "$(tmuxifier init -)"
