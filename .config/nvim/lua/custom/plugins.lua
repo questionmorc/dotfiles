@@ -1,4 +1,11 @@
 local plugins = {
+  -- {
+  --   "huggingface/llm.nvim",
+  --   lazy = false,
+  --   opts = function()
+  --     require "custom.configs.llm"
+  --   end,
+  -- },
   {
     "nvim-telescope/telescope.nvim",
     dependencies = {
@@ -13,7 +20,7 @@ local plugins = {
     -- }
 
     opts = function()
-      require "plugins.configs.telescope"
+      -- require "plugins.configs.telescope"
       require "custom.configs.telescope"
     end,
   },
@@ -53,6 +60,9 @@ local plugins = {
         "lua-language-server ",
         "jsonnetfmt",
         "helm-ls",
+        "llm-ls",
+        "circleci-yaml-language-server",
+
       }
     }
   },
