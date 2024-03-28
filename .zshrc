@@ -60,3 +60,4 @@ path+=($HOME/.tmux/plugins/tmuxifier/bin)
 export TMUXIFIER_LAYOUT_PATH="$HOME/dotfiles/tmux-layouts"
 #export TMUXIFIER_TMUX_ITERM_ATTACH="-CC"
 eval "$(tmuxifier init -)"
+bindkey -M vicmd '/' history-incremental-search-backward
