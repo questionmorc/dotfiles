@@ -7,4 +7,5 @@ M.ui = {
 }
 M.plugins = 'custom.plugins'
 M.mappings = require 'custom.mappings'
+-- vim.pretty_print(M.plugins)
 return M

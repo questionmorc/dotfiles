@@ -1,4 +1,8 @@
 local plugins = {
+  {
+    lazy = false,
+    "github/copilot.vim"
+  },
   -- {
   --   "huggingface/llm.nvim",
   --   lazy = false,
