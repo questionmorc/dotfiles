@@ -20,8 +20,7 @@ alias l='ls -CF'
 alias vim='nvim'
 alias vi='nvim'
 
-eval "$(oh-my-posh init zsh --config '~/oh-my-posh-themes/mrrc.json')"
-alias config="/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME"
+# alias config="/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME"
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f "$HOME/lib/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/lib/google-cloud-sdk/path.zsh.inc"; fi
@@ -31,26 +30,34 @@ if [ -f "$HOME/lib/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/lib/goo
 
 path+=($HOME/bin)
 path+=($HOME/.bin)
-path+=($HOME/code/backend/platform/bin)
-path+=(/opt/homebrew/Cellar/mysql-client/8.3.0/bin)
 #export PATH=$PATH:$HOME/bin
-eval "$(mise activate -C ~/code/backend zsh)"
-GOROOT="$HOME/.local/share/mise/installs/go/1.22.0"
-export LIBRARY_PATH=/opt/homebrew/lib
+#
+# What OS are we running?
+if [[ $(uname) == "Darwin" ]]; then
+    #source "$ZSH_CUSTOM"/os/mac.zsh
+  path+=($HOME/code/backend/platform/bin)
+  path+=(/opt/homebrew/Cellar/mysql-client/8.3.0/bin)
+  eval "$(mise activate -C ~/code/backend zsh)"
+  GOROOT="$HOME/.local/share/mise/installs/go/1.22.0"
+  export LIBRARY_PATH=/opt/homebrew/lib
+  autoload -U +X bashcompinit && bashcompinit
+  complete -o nospace -C /Users/malloul/.local/share/mise/installs/tanka/latest/bin/tk tk
+fi
+
 export K9S_EDITOR=nvim
 
 
 #autoload -U +X bashcompinit && bashcompinit
 #complete -o nospace -C /opt/homebrew/bin/terragrunt terragrunt
-eval "$(zoxide init --cmd cd zsh)"
 #alias ls="exa"
 #alias "ls -ltr"="ls -lsnew"
 #alias ll="exa -lgah"
 #alias tree="exa --tree"
 export KUBE_EDITOR=nvim
 
-autoload -U +X bashcompinit && bashcompinit
-complete -o nospace -C /Users/malloul/.local/share/mise/installs/tanka/latest/bin/tk tk
+eval "$(oh-my-posh init zsh --config '~/oh-my-posh-themes/mrrc.json')"
+eval "$(zoxide init --cmd cd zsh)"
+
 # Bash/ZSH example using less
 export PAGER="less"
 fpath=(~/.zsh.d/ $fpath)
