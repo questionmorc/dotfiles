@@ -66,6 +66,7 @@ local plugins = {
         "helm-ls",
         "llm-ls",
         "circleci-yaml-language-server",
+        "bash-language-server",
 
       }
     }
