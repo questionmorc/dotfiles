@@ -1,5 +1,4 @@
 local plugins = {
-  -- lazy.nvim
   {
     "folke/noice.nvim",
     event = "VeryLazy",
@@ -15,11 +14,7 @@ local plugins = {
       },
     },
     dependencies = {
-      -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
       "MunifTanjim/nui.nvim",
-      -- OPTIONAL:
-      --   `nvim-notify` is only needed, if you want to use the notification view.
-      --   If not available, we use `mini` as the fallback
       "rcarriga/nvim-notify",
     }
   },
@@ -36,12 +31,7 @@ local plugins = {
       "ANGkeith/telescope-terraform-doc.nvim",
       version = "^1.0.0",
     },
-    -- opts = {
-    --   extensions_list = { "themes", "terms", "live_grep_args" }
-    -- }
-
     opts = function()
-      -- require "plugins.configs.telescope"
       require "custom.configs.telescope"
     end,
   },
