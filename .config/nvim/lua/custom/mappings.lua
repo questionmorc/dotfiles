@@ -66,22 +66,24 @@ M.fugitive = {
     ["<leader>gs"] = { vim.cmd.Git },
   }
 }
--- local diagnostics_active = true
--- local toggle_diagnostics = function()
---     diagnostics_active = not diagnostics_active
---     if diagnostics_active then
---         vim.diagnostic.show()
---   else
---     vim.diagnostic.hide()
---   end
--- end
---
--- M.lsp = {
---   n = {
---     ["<leader>tt"] = {toggle_diagnostics(), "Toggle LSP diagnostics"},
---   }
--- }
 
+M.harpoon = {
+  n = {
+    ["<leader>mm"] = { "<cmd>lua require('harpoon'):list():add()<cr>", "Mark file" },
+    -- ["<leader>mt"] = { "<cmd>lua require('harpoon').ui:toggle_quick_menu(require('harpoon'):list())<cr>", "Toggle UI" },
+    ["<leader>ma"] = { "<cmd>lua require('harpoon'):list():select(1)<cr>", "Goto mark 1" },
+    ["<leader>ms"] = { "<cmd>lua require('harpoon'):list():select(2)<cr>", "Goto mark 2" },
+    ["<leader>md"] = { "<cmd>lua require('harpoon'):list():select(3)<cr>", "Goto mark 3" },
+    ["<leader>mf"] = { "<cmd>lua require('harpoon'):list():select(4)<cr>", "Goto mark 4" },
+    ["<leader>mg"] = { "<cmd>lua require('harpoon'):list():select(5)<cr>", "Goto mark 5" },
+    ["<leader>mq"] = { "<cmd>lua require('harpoon'):list():select(6)<cr>", "Goto mark 6" },
+    ["<leader>mw"] = { "<cmd>lua require('harpoon'):list():select(7)<cr>", "Goto mark 7" },
+    ["<leader>me"] = { "<cmd>lua require('harpoon'):list():select(8)<cr>", "Goto mark 8" },
+    ["<leader>mr"] = { "<cmd>lua require('harpoon'):list():select(9)<cr>", "Goto mark 9" },
+    ["<leader>mn"] = { "<cmd>lua require('harpoon'):list():next()<cr>", "Next file" },
+    ["<leader>mN"] = { "<cmd>lua require('harpoon'):list():prev()<cr>", "Prev file" },
+  },
+}
 M.undotree = {
   n = {
     ["<leader>u"] = { vim.cmd.UndotreeToggle },
