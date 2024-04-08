@@ -63,7 +63,7 @@ local plugins = {
       version = "^1.0.0",
     },
     opts = function()
-      require "custom.configs.telescope"
+      require "configs.telescope"
     end,
   },
   {
@@ -78,8 +78,8 @@ local plugins = {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     opts = function()
-      require "plugins.configs.treesitter"
-      require "custom.configs.treesitter"
+      require "nvchad.configs.treesitter"
+      require "configs.treesitter"
     end,
   },
 
@@ -127,8 +127,8 @@ local plugins = {
   {
     "neovim/nvim-lspconfig",
     config = function()
-      require "plugins.configs.lspconfig"
-      require "custom.configs.lspconfig"
+      require ("nvchad.configs.lspconfig").defaults()
+      require "configs.lspconfig"
     end,
   },
   {
@@ -136,7 +136,7 @@ local plugins = {
     ft = { "go", "terraform", "tf", "terraform-vars", "hcl" },
     dependencies = "nvim-lua/plenary.nvim",
     opts = function()
-      return require "custom.configs.null-ls"
+      return require "configs.null-ls"
     end,
   },
   {
