@@ -1,14 +1,18 @@
 -- local telescope = require("telescope")
 local lga_actions = require("telescope-live-grep-args.actions")
 local conf = require "plugins.configs.telescope"
-conf.extensions_list = {
-  "themes",
-  "terms",
+
+local extensions = {
   "live_grep_args",
   "project",
   "file_browser",
   "terraform_doc",
 }
+
+for _, extension in ipairs(extensions) do
+  table.insert(conf.extensions_list, extension)
+end
+
 conf.extensions = {
   projects = {},
   file_browser = {},
