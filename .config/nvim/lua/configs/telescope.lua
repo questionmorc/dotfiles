@@ -1,6 +1,6 @@
 -- local telescope = require("telescope")
 local lga_actions = require("telescope-live-grep-args.actions")
-local conf = require "plugins.configs.telescope"
+local conf = require "nvchad.configs.telescope"
 
 local extensions = {
   "live_grep_args",
