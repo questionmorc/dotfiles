@@ -14,10 +14,57 @@ local plugins = {
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
-    opts = function()
-      require "nvchad.configs.treesitter"
-      require "configs.treesitter"
-    end,
+    opts = {
+      ensure_installed = {
+        "awk",
+        "bash",
+        "c",
+        "csv",
+        "diff",
+        "dockerfile",
+        "git_config",
+        "gitcommit",
+        "gitignore",
+        "go",
+        "gomod",
+        "graphql",
+        "groovy",
+        "hcl",
+        "html",
+        "http",
+        "java",
+        "javascript",
+        "jq",
+        "json",
+        "lua",
+        "make",
+        "markdown",
+        "markdown_inline",
+        "passwd",
+        "promql",
+        "python",
+        "regex",
+        "requirements",
+        "rust",
+        "sql",
+        "ssh_config",
+        "terraform",
+        "toml",
+        "typescript",
+        "vim",
+        "vimdoc",
+        "xml",
+        "yaml",
+      },
+      highlight = {
+        enable = true,
+        additional_vim_regex_highlighting = false,
+      }
+    }
+    -- opts = function()
+    --   require "nvchad.configs.treesitter"
+    --   require "configs.treesitter"
+    -- end,
   },
 
   --  {
@@ -42,7 +89,15 @@ local plugins = {
         "llm-ls",
         "circleci-yaml-language-server",
         "bash-language-server",
-
+        "beautysh",
+        "prettier",
+        "prettierd",
+        "tflint",
+        "buf",
+        "htmlbeautifier",
+        "rustfmt",
+        "yamlfix",
+        "taplo",
       }
     }
   },
