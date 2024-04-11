@@ -98,6 +98,7 @@ local plugins = {
         "rustfmt",
         "yamlfix",
         "taplo",
+        'ansible-language-server',
       }
     }
   },

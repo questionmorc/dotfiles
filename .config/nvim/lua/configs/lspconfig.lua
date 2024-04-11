@@ -4,7 +4,13 @@ local capabilities = require("nvchad.configs.lspconfig").capabilities
 
 local lspconfig = require("lspconfig")
 local util = require "lspconfig/util"
-local servers = { "terraformls", "jsonnet_ls", "helm_ls", "bashls" }
+local servers = {
+  "terraformls",
+  "jsonnet_ls",
+  "helm_ls",
+  "bashls",
+  "ansiblels",
+}
 
 for _, lsp in ipairs(servers) do
   lspconfig[lsp].setup {

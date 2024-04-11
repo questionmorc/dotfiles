@@ -24,6 +24,7 @@ local options = {
     toml = { "taplo" },
     css = { { "prettierd", "prettier" } },
     scss = { { "prettierd", "prettier" } },
+    ansible = { "ansible_lint" },
   },
 
   -- format_on_save = {
