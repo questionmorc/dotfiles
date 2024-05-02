@@ -6,10 +6,10 @@ local lspconfig = require("lspconfig")
 local util = require "lspconfig/util"
 local servers = {
   "terraformls",
-  "jsonnet_ls",
   "helm_ls",
   "bashls",
   "ansiblels",
+  -- "jsonnet_ls",
 }
 
 for _, lsp in ipairs(servers) do
@@ -19,6 +19,15 @@ for _, lsp in ipairs(servers) do
     capabilities = capabilities,
   }
 end
+
+-- lspconfig.jsonnet_ls.setup {
+--   on_attach = on_attach,
+--   capabilities = capabilities,
+--   cmd = { "jsonnet-language-server" },
+--   filetypes = { "jsonnet", "libsonnet" },
+--   root_dir = util.root_pattern("jsonnetfile.json", ".git"),
+--   single_file_support = true
+-- }
 
 lspconfig.gopls.setup {
   on_attach = on_attach,
