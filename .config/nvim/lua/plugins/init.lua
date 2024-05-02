@@ -124,14 +124,14 @@ local plugins = {
       require "configs.lspconfig"
     end,
   },
-  {
-    "nvimtools/none-ls.nvim",
-    ft = { "go", "terraform", "tf", "terraform-vars", "hcl" },
-    dependencies = "nvim-lua/plenary.nvim",
-    opts = function()
-      return require "configs.null-ls"
-    end,
-  },
+  -- {
+  --   "nvimtools/none-ls.nvim",
+  --   ft = { "go", "terraform", "tf", "terraform-vars", "hcl" },
+  --   dependencies = "nvim-lua/plenary.nvim",
+  --   opts = function()
+  --     return require "configs.null-ls"
+  --   end,
+  -- },
   --  {
   --    "olexsmir/gopher.nvim",
   --    ft = "go",
