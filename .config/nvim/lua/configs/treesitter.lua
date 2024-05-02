@@ -20,6 +20,7 @@ return {
     "javascript",
     "jq",
     "json",
+    "jsonnet",
     "lua",
     "make",
     "markdown",
