@@ -22,6 +22,10 @@ map({ "n" }, "<leader>tg", ":Telescope terraform_doc full_name=hashicorp/google<
   silent = true
 })
 
+-- QuickFix
+map({ "n" }, "<leader>k", "<cmd>cprev<CR>zz", { desc = "Quickfix Previous item" })
+map({ "n" }, "<leader>j", "<cmd>cnext<CR>zz", { desc = "Quiclfix Next item" })
+
 
 -- Fugitive
 map({ "n" }, "<leader>gs", vim.cmd.Git, { desc = "Fugitive git status", silent = true })
