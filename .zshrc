@@ -102,3 +102,5 @@ zinit light zsh-users/zsh-autosuggestions
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-syntax-highlighting
 
+# Set up fzf key bindings and fuzzy completion
+eval "$(fzf --zsh)"
