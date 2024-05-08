@@ -15,7 +15,7 @@ map({ "n" }, "<leader>fp", ":lua require'telescope'.extensions.project.project{}
   desc = "Telescope Projects",
   silent = true
 })
-map({ "n" }, "<leader>fb", ":Telescope file_browser<CR>", { desc = "Telescope File Browser", silent = true })
+map({ "n" }, "<leader>fj", ":Telescope file_browser<CR>", { desc = "Telescope File Browser", silent = true })
 map({ "n" }, "<leader>td", ":Telescope terraform_doc<CR>", { desc = "Terraform docs", silent = true })
 map({ "n" }, "<leader>tg", ":Telescope terraform_doc full_name=hashicorp/google<CR>", {
   desc = "Terraform GCP docs",
@@ -43,7 +43,8 @@ map({ "n" }, "<C-k>", "<cmd> TmuxNavigateUp<CR>", { desc = "TmuxNavigator window
 
 
 -- Harpoon
---     -- ["<leader>mt"] = { "<cmd>lua require('harpoon').ui:toggle_quick_menu(require('harpoon'):list())<cr>", "Toggle UI" },
+map({ "n" }, "<leader>mt", "<cmd>lua require('harpoon').ui:toggle_quick_menu(require('harpoon'):list())<cr>",
+  { desc = "Harpoon quick menu", silent = true })
 map({ "n" }, "<leader>mm", "<cmd>lua require('harpoon'):list():add()<cr>", { desc = "Harpoon Mark file" })
 map({ "n" }, "<leader>ma", "<cmd>lua require('harpoon'):list():select(1)<cr>", { desc = "Harpoon Goto mark 1" })
 map({ "n" }, "<leader>ms", "<cmd>lua require('harpoon'):list():select(2)<cr>", { desc = "Harpoon Goto mark 2" })
@@ -68,7 +69,7 @@ local diagnostics_active = true
 local toggle_diagnostics = function()
   diagnostics_active = not diagnostics_active
   if diagnostics_active then
-      vim.diagnostic.show()
+    vim.diagnostic.show()
   else
     vim.diagnostic.hide()
   end
