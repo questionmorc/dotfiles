@@ -1,27 +1,35 @@
 {
   "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
   "palette": {
-        "os": "#ACB0BE",
-        "red": "#f38ba8",
-        "lavender": "#b4befe",
-        "flamingo": "#f2cdcd",
-        "peach": "#fab387",
-        "green": "#a6e3a1",
-        "blue":  "#8AADF4",
-        "wight": "#FFFFFF",
-        "text": "#494D64"
+    "os": "#ACB0BE",
+    "red": "#f38ba8",
+    "lavender": "#b4befe",
+    "flamingo": "#f2cdcd",
+    "peach": "#fab387",
+    "green": "#a6e3a1",
+    "blue": "#8AADF4",
+    "wight": "#FFFFFF",
+    "text": "#494D64"
   },
   "blocks": [
     {
       "alignment": "left",
       "segments": [
-          {
+        {
           "background": "p:green",
           "foreground": "p:text",
           "powerline_symbol": "\ue0b4",
           "style": "diamond",
           "template": " {{ .UserName }}",
           "type": "session"
+        },
+        {
+          "type": "session",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:text",
+          "background": "p:red",
+          "template": "{{ if .SSHSession }}@{{ .Hostname }}{{ end }}"
         },
         {
           "background": "p:peach",
