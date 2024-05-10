@@ -30,6 +30,7 @@ if [ -f "$HOME/lib/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/lib/goo
 
 path+=($HOME/bin)
 path+=($HOME/.bin)
+path+=($HOME/.local/bin)
 #export PATH=$PATH:$HOME/bin
 #
 # What OS are we running?
