@@ -32,7 +32,7 @@ path+=($HOME/bin)
 path+=($HOME/.bin)
 path+=($HOME/.local/bin)
 #export PATH=$PATH:$HOME/bin
-#
+#/
 # What OS are we running?
 if [[ $(uname) == "Darwin" ]]; then
     #source "$ZSH_CUSTOM"/os/mac.zsh
@@ -43,6 +43,11 @@ if [[ $(uname) == "Darwin" ]]; then
   export LIBRARY_PATH=/opt/homebrew/lib
   autoload -U +X bashcompinit && bashcompinit
   complete -o nospace -C /Users/malloul/.local/share/mise/installs/tanka/latest/bin/tk tk
+fi
+
+if command -v apt &> /dev/null; then
+  GOROOT="/usr/local/go"
+  path+=(/usr/local/go/bin)
 fi
 
 export K9S_EDITOR=nvim
