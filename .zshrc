@@ -1,8 +1,16 @@
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
 HISTFILE=~/.zsh_history
 HISTSIZE=10000
-SAVEHIST=10000
-setopt SHARE_HISTORY
+SAVEHIST=$HISTSIZE
+HISTDUP=erase
+setopt appendhistory
+setopt sharehistory
+setopt hist_ignore_space
+setopt hist_ignore_all_dups
+setopt hist_save_no_dups
+setopt hist_ignore_dups
+setopt hist_find_no_dups
+# setopt SHARE_HISTORY
 
 # enable color support of ls and also add handy aliases
 export CLICOLOR=1
@@ -12,7 +20,7 @@ export CLICOLOR=1
 
 alias grep='grep --color=auto'
 # some more ls aliases
-alias ls="ls -G"
+alias ls="ls --color -G"
 alias ll='ls -aGlF'
 alias la='ls -A'
 alias l='ls -CF'
@@ -107,6 +115,15 @@ zinit light jeffreytse/zsh-vi-mode
 zinit light zsh-users/zsh-autosuggestions
 zinit light zsh-users/zsh-completions
 zinit light zsh-users/zsh-syntax-highlighting
+zinit light Aloxaf/fzf-tab
 
+# Completion styling
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' menu no
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
+zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 # Set up fzf key bindings and fuzzy completion
 eval "$(fzf --zsh)"
+
+# [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
