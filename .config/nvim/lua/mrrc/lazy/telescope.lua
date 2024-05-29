@@ -16,6 +16,21 @@ return {
         local lga_actions = require('telescope-live-grep-args.actions')
         require('telescope').setup({
             defaults = {
+                sorting_strategy = "ascending",
+                layout_strategy = "horizontal",
+                layout_config = {
+                    horizontal = {
+                        prompt_position = "top",
+                        preview_width = 0.55,
+                        results_width = 0.8,
+                    },
+                    vertical = {
+                        mirror = false,
+                    },
+                    width = 0.87,
+                    height = 0.80,
+                    preview_cutoff = 120,
+                },
                 ignore_patterns = {
                     "node_modules",
                     ".git",
@@ -127,7 +142,7 @@ return {
 
         local builtin = require('telescope.builtin')
         vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = "telescope find files" })
-        vim.keymap.set('n', '<leader>fg', builtin.git_files, {desc = "telescope git files" })
+        vim.keymap.set('n', '<leader>fg', builtin.git_files, { desc = "telescope git files" })
         vim.keymap.set('n', '<leader>pws', function()
             local word = vim.fn.expand("<cword>")
             builtin.grep_string({ search = word })
