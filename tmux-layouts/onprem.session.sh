@@ -13,7 +13,7 @@ if initialize_session "onprem"; then
   load_window "onprem"
   #tmux split-window -t "$session:$window.1" -v -p 50
   
-  load_window "onprem-vm"
+  # load_window "onprem-vm"
 
   select_window "onprem"
 

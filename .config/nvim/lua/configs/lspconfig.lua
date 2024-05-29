@@ -9,7 +9,7 @@ local servers = {
   "helm_ls",
   "bashls",
   "ansiblels",
-  -- "jsonnet_ls",
+  "jinja_lsp",
 }
 
 for _, lsp in ipairs(servers) do
@@ -20,14 +20,14 @@ for _, lsp in ipairs(servers) do
   }
 end
 
--- lspconfig.jsonnet_ls.setup {
---   on_attach = on_attach,
---   capabilities = capabilities,
---   cmd = { "jsonnet-language-server" },
---   filetypes = { "jsonnet", "libsonnet" },
---   root_dir = util.root_pattern("jsonnetfile.json", ".git"),
---   single_file_support = true
--- }
+lspconfig.jsonnet_ls.setup {
+  on_attach = on_attach,
+  capabilities = capabilities,
+  cmd = { "jsonnet-language-server" },
+  filetypes = { "jsonnet", "libsonnet" },
+  root_dir = util.root_pattern("jsonnetfile.json", ".git"),
+  single_file_support = true
+}
 
 lspconfig.gopls.setup {
   on_attach = on_attach,

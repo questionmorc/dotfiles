@@ -4,6 +4,10 @@ local plugins = {
     "github/copilot.vim"
   },
   {
+    "google/vim-jsonnet",
+    ft = "jsonnet"
+  },
+  {
     "towolf/vim-helm",
     ft = "helm"
   },
@@ -36,6 +40,7 @@ local plugins = {
         "javascript",
         "jq",
         "json",
+        "jsonnet",
         "lua",
         "make",
         "markdown",

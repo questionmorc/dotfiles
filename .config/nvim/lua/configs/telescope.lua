@@ -17,7 +17,7 @@ conf.defaults.file_ignore_patterns = {
   "node_modules",
   ".git",
   ".cache",
-  ".terraform",
+  -- ".terraform",
   ".serverless",
   ".vscode",
   ".github",

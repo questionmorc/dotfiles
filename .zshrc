@@ -46,6 +46,7 @@ if [[ $(uname) == "Darwin" ]]; then
     #source "$ZSH_CUSTOM"/os/mac.zsh
   path+=($HOME/code/backend/platform/bin)
   path+=(/opt/homebrew/Cellar/mysql-client/8.3.0/bin)
+  export PATH=/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH
   eval "$(mise activate -C ~/code/backend zsh)"
   GOROOT="$HOME/.local/share/mise/installs/go/1.22.0"
   export LIBRARY_PATH=/opt/homebrew/lib

@@ -3,7 +3,7 @@ palette = 'catppuccin_mocha'
 format = """
 [](green)\
 $username\
-[](bg:peach fg:green)\
+[](fg:green bg:peach )\
 $directory\
 [](fg:peach bg:lavender)\
 $git_branch\
