@@ -1,6 +1,10 @@
 vim.g.mapleader = " "
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 
+vim.keymap.set({ "n" }, "<C-h>", "<cmd> TmuxNavigateLeft<CR>", { desc = "TmuxNavigator window left" })
+vim.keymap.set({ "n" }, "<C-l>", "<cmd> TmuxNavigateRight<CR>", { desc = "TmuxNavigator window right" })
+vim.keymap.set({ "n" }, "<C-j>", "<cmd> TmuxNavigateDown<CR>", { desc = "TmuxNavigator window down" })
+vim.keymap.set({ "n" }, "<C-k>", "<cmd> TmuxNavigateUp<CR>", { desc = "TmuxNavigator window up" })
 
 -- buffers
 vim.keymap.set("n", "<leader>x", ':bd<CR>')
@@ -8,7 +12,7 @@ vim.keymap.set("n", "<tab>", ':bn<CR>')
 vim.keymap.set("n", "<S-tab>", ':bp<CR>')
 
 vim.keymap.set("n", "<leader>fm", function()
-  require("conform").format { lsp_fallback = true }
+    require("conform").format { lsp_fallback = true }
 end, { desc = "format files" })
 
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
@@ -31,17 +35,17 @@ vim.keymap.set("n", "N", "Nzzzv")
 vim.keymap.set("x", "<leader>p", [["_dP]])
 
 -- next greatest remap ever : asbjornHaland
-vim.keymap.set({"n", "v"}, "<leader>y", [["+y]])
+vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]])
 vim.keymap.set("n", "<leader>Y", [["+Y]])
 
-vim.keymap.set({"n", "v"}, "<leader>d", [["_d]])
+vim.keymap.set({ "n", "v" }, "<leader>d", [["_d]])
 
 -- This is going to get me cancelled
 vim.keymap.set("i", "<C-c>", "<Esc>")
 
 vim.keymap.set("n", "Q", "<nop>")
-vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
-vim.keymap.set("n", "<leader>f", vim.lsp.buf.format)
+-- vim.keymap.set("n", "<C-f>", "<cmd>silent !tmux neww tmux-sessionizer<CR>")
+-- vim.keymap.set("n", "<leader>f", vim.lsp.buf.format)
 
 vim.keymap.set("n", "<C-k>", "<cmd>cnext<CR>zz")
 vim.keymap.set("n", "<C-j>", "<cmd>cprev<CR>zz")
@@ -66,14 +70,14 @@ end)
 
 -- Comment
 vim.keymap.set("n", "<leader>/", function()
-  require("Comment.api").toggle.linewise.current()
+    require("Comment.api").toggle.linewise.current()
 end, { desc = "comment toggle" })
 
 vim.keymap.set(
-  "v",
-  "<leader>/",
-  "<ESC><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<CR>",
-  { desc = "comment toggle" }
+    "v",
+    "<leader>/",
+    "<ESC><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<CR>",
+    { desc = "comment toggle" }
 )
 
 
@@ -81,5 +85,5 @@ vim.keymap.set(
 vim.keymap.set("n", "<leader>wK", "<cmd>WhichKey <CR>", { desc = "whichkey all keymaps" })
 
 vim.keymap.set("n", "<leader>wk", function()
-  vim.cmd("WhichKey " .. vim.fn.input "WhichKey: ")
+    vim.cmd("WhichKey " .. vim.fn.input "WhichKey: ")
 end, { desc = "whichkey query lookup" })

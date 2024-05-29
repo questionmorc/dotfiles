@@ -5,6 +5,10 @@ return {
         name = "plenary"
     },
     {
+        "christoomey/vim-tmux-navigator",
+        lazy = false
+    },
+    {
         'akinsho/bufferline.nvim',
         version = "*",
         dependencies = 'nvim-tree/nvim-web-devicons',
