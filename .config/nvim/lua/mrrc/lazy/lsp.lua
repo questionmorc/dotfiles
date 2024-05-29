@@ -67,11 +67,11 @@ return {
 
         local lspconfig = require("lspconfig")
         for _, lsp in ipairs(ensure_installed) do
-            lspconfig[lsp].setup {
-                -- on_init = on_init,
-                -- on_attach = on_attach,
-                capabilities = capabilities,
-            }
+            if lsp ~= "lua_ls" then
+                lspconfig[lsp].setup {
+                    capabilities = capabilities,
+                }
+            end
         end
         local cmp_select = { behavior = cmp.SelectBehavior.Select }
 
