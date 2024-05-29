@@ -21,17 +21,29 @@ return {
             {},
             vim.lsp.protocol.make_client_capabilities(),
             cmp_lsp.default_capabilities())
-
+        local ensure_installed = {
+            "lua_ls",
+            "rust_analyzer",
+            "ansiblels",
+            "bashls",
+            "dockerls",
+            "docker_compose_language_service",
+            "gopls",
+            -- "golangci_lint_ls",
+            "helm_ls",
+            "jsonls",
+            "tsserver",
+            "jsonnet_ls",
+            "jqls",
+            "terraformls",
+            "yamlls",
+        }
         require("fidget").setup({})
         require("mason").setup()
         require("mason-lspconfig").setup({
-            ensure_installed = {
-                "lua_ls",
-                "rust_analyzer",
-            },
+            ensure_installed = ensure_installed,
             handlers = {
                 function(server_name) -- default handler (optional)
-
                     require("lspconfig")[server_name].setup {
                         capabilities = capabilities
                     }
@@ -53,6 +65,14 @@ return {
             }
         })
 
+        local lspconfig = require("lspconfig")
+        for _, lsp in ipairs(ensure_installed) do
+            lspconfig[lsp].setup {
+                -- on_init = on_init,
+                -- on_attach = on_attach,
+                capabilities = capabilities,
+            }
+        end
         local cmp_select = { behavior = cmp.SelectBehavior.Select }
 
         cmp.setup({
