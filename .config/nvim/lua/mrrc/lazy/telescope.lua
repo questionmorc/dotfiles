@@ -127,7 +127,7 @@ return {
 
         local builtin = require('telescope.builtin')
         vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = "telescope find files" })
-        vim.keymap.set('n', '<leader>fg', builtin.git_files, {})
+        vim.keymap.set('n', '<leader>fg', builtin.git_files, {desc = "telescope git files" })
         vim.keymap.set('n', '<leader>pws', function()
             local word = vim.fn.expand("<cword>")
             builtin.grep_string({ search = word })
@@ -142,14 +142,14 @@ return {
         vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = "Telescope Help page" })
         -- telescope
         -- vim.keymap.set("n", "<leader>fw", "<cmd>Telescope live_grep<CR>", { desc = "telescope live grep" })
-        vim.keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<CR>", { desc = "telescope find buffers" })
+        vim.keymap.set("n", "<leader>fb", builtin.buffers, { desc = "telescope find buffers" })
         -- vim.keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<CR>", { desc = "telescope help page" })
-        vim.keymap.set("n", "<leader>ma", "<cmd>Telescope marks<CR>", { desc = "telescope find marks" })
-        vim.keymap.set("n", "<leader>fo", "<cmd>Telescope oldfiles<CR>", { desc = "telescope find oldfiles" })
-        vim.keymap.set("n", "<leader>fz", "<cmd>Telescope current_buffer_fuzzy_find<CR>",
+        vim.keymap.set("n", "<leader>ma", builtin.marks, { desc = "telescope find marks" })
+        vim.keymap.set("n", "<leader>fo", builtin.oldfiles, { desc = "telescope find oldfiles" })
+        vim.keymap.set("n", "<leader>fz", builtin.current_buffer_fuzzy_find,
             { desc = "telescope find in current buffer" })
-        vim.keymap.set("n", "<leader>cm", "<cmd>Telescope git_commits<CR>", { desc = "telescope git commits" })
-        vim.keymap.set("n", "<leader>gt", "<cmd>Telescope git_status<CR>", { desc = "telescope git status" })
+        vim.keymap.set("n", "<leader>cm", builtin.git_commits, { desc = "telescope git commits" })
+        vim.keymap.set("n", "<leader>gt", builtin.git_status, { desc = "telescope git status" })
         vim.keymap.set(
             "n",
             "<leader>fa",
