@@ -16,6 +16,16 @@ return {
         local lga_actions = require('telescope-live-grep-args.actions')
         require('telescope').setup({
             defaults = {
+                vimgrep_arguments = {
+                    "rg",
+                    "-L",
+                    "--color=never",
+                    "--no-heading",
+                    "--with-filename",
+                    "--line-number",
+                    "--column",
+                    "--smart-case",
+                },
                 sorting_strategy = "ascending",
                 layout_strategy = "horizontal",
                 layout_config = {
