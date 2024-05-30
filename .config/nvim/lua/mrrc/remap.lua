@@ -1,4 +1,7 @@
 vim.g.mapleader = " "
+
+vim.keymap.set("i", "jk", "<Esc>", { desc = "Esc" })
+
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex, { desc = "Open netrw" })
 
 vim.keymap.set({ "n" }, "<C-h>", "<cmd> TmuxNavigateLeft<CR>", { desc = "TmuxNavigator window left" })
@@ -11,6 +14,11 @@ vim.keymap.set("n", "<leader>x", ':bd<CR>', { desc = "Close current buffer", sil
 vim.keymap.set("n", "<tab>", ':bn<CR>', { desc = "Go to next buffer", silent = true })
 vim.keymap.set("n", "<S-tab>", ':bp<CR>', { desc = "Go to previous buffer", silent = true })
 vim.keymap.set("n", "<leader>b", ':enew<CR>', { desc = "Open new buffer", silent = true })
+-- splits
+vim.keymap.set("n", "<M-,>", "<c-w>5<")
+vim.keymap.set("n", "<M-.>", "<c-w>5>")
+vim.keymap.set("n", "<M-t>", "<C-W>+")
+vim.keymap.set("n", "<M-s>", "<C-W>-")
 
 vim.keymap.set("n", "<leader>fm", function()
     require("conform").format { lsp_fallback = true }

@@ -9,6 +9,7 @@ return {
         "nvim-telescope/telescope-project.nvim",
         "nvim-telescope/telescope-file-browser.nvim",
         "ANGkeith/telescope-terraform-doc.nvim",
+        { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
         version = "^1.0.0",
     },
 
@@ -126,6 +127,7 @@ return {
             extensions = {
                 projects = {},
                 file_browser = {},
+                fzf = {},
                 terraform_doc = {},
                 live_grep_args = {
                     auto_quoting = true,
@@ -142,6 +144,7 @@ return {
         local extensions_list = {
             "project",
             "file_browser",
+            "fzf",
             "terraform_doc",
             "live_grep_args"
         }
