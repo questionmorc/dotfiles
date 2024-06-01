@@ -17,6 +17,8 @@ return {
         end
     },
     "github/copilot.vim",
+    { "lukas-reineke/indent-blankline.nvim", main = "ibl", opts = {} },
+    -- 'NvChad/nvim-colorizer.lua',
     --    "eandrju/cellular-automaton.nvim",
     --    "gpanders/editorconfig.nvim",
 }
