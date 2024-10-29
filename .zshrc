@@ -48,10 +48,11 @@ if [[ $(uname) == "Darwin" ]]; then
   path+=(/opt/homebrew/Cellar/mysql-client/8.3.0/bin)
   export PATH=/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH
   eval "$(mise activate -C ~/code/backend zsh)"
-  GOROOT="$HOME/.local/share/mise/installs/go/1.22.0"
+  GOROOT="$HOME/.local/share/mise/installs/go/1.22.1"
   export LIBRARY_PATH=/opt/homebrew/lib
   autoload -U +X bashcompinit && bashcompinit
   complete -o nospace -C /Users/malloul/.local/share/mise/installs/tanka/latest/bin/tk tk
+  alias sed='gsed'
 fi
 
 if command -v apt &> /dev/null; then
@@ -128,3 +129,11 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 eval "$(fzf --zsh)"
 
 # [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# export PATH="/opt/homebrew/opt/go@1.22/bin:$PATH"
+function gitstash() {
+    git stash push -m "zsh_stash_name_$1"
+}
+
+function gitstashapply() {
+    git stash apply $(git stash list | grep "zsh_stash_name_$1" | cut -d: -f1)
+}
