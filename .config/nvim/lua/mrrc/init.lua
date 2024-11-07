@@ -30,11 +30,11 @@ autocmd('TextYankPost', {
     end,
 })
 
-autocmd({ "BufWritePre" }, {
-    group = MrrcGroup,
-    pattern = "*",
-    command = [[%s/\s\+$//e]],
-})
+-- autocmd({ "BufWritePre" }, {
+--     group = MrrcGroup,
+--     pattern = "*",
+--     command = [[%s/\s\+$//e]],
+-- })
 
 autocmd('LspAttach', {
     group = MrrcGroup,
