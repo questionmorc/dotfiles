@@ -146,7 +146,8 @@ return {
             "file_browser",
             "fzf",
             "terraform_doc",
-            "live_grep_args"
+            "live_grep_args",
+            "git_worktree"
         }
         local telescope = require('telescope')
         for _, ext in ipairs(extensions_list) do
@@ -200,5 +201,10 @@ return {
             desc = "Terraform GCP docs",
             silent = true
         })
+
+        vim.keymap.set("n", "<leader>ws", ":lua require('telescope').extensions.git_worktree.git_worktrees()<CR>",
+            { desc = "Switch/Delete git worktrees", silent = true })
+        vim.keymap.set("n", "<leader>wc", ":lua require('telescope').extensions.git_worktree.create_git_worktree()<CR>",
+            { desc = "Create git worktrees", silent = true })
     end
 }
