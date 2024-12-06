@@ -1,8 +1,15 @@
 vim.g.mapleader = " "
 
+-- Use ESC to exit terminal mode
+vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]])
+
 vim.keymap.set("i", "jk", "<Esc>", { desc = "Esc" })
 
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex, { desc = "Open netrw" })
+-- embedded lua
+vim.keymap.set("n", "<space><space>e", "<cmd>source %<CR>", { desc = "Source current file" })
+vim.keymap.set("n", "<leader>e", ":.lua<CR>", { desc = "Execute lua in current file" })
+vim.keymap.set("v", "<leader>e", ":lua<CR>", { desc = "Execute lua on current line" })
 
 vim.keymap.set({ "n" }, "<C-h>", "<cmd> TmuxNavigateLeft<CR>", { desc = "TmuxNavigator window left" })
 vim.keymap.set({ "n" }, "<C-l>", "<cmd> TmuxNavigateRight<CR>", { desc = "TmuxNavigator window right" })
