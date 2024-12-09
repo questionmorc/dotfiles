@@ -160,7 +160,7 @@ return {
             builtin.find_files {
                 cwd = vim.fn.stdpath('config')
             }
-        end, { desc = "telescope find files" })
+        end, { desc = "telescope find nvim config files" })
         vim.keymap.set('n', '<leader>fg', builtin.git_files, { desc = "telescope git files" })
         vim.keymap.set('n', '<leader>pws', function()
             local word = vim.fn.expand("<cword>")
