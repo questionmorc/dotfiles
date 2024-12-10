@@ -15,6 +15,8 @@ return {
 
   config = function()
     local lga_actions = require('telescope-live-grep-args.actions')
+    local open_with_trouble = require("trouble.sources.telescope").open
+
     require('telescope').setup({
       defaults = {
         vimgrep_arguments = {
@@ -122,6 +124,11 @@ return {
           ".yarnrc.rst",
           ".yarnrc.html",
         },
+
+        mappings = {
+          i = { ["<c-t>"] = open_with_trouble },
+          n = { ["<c-t>"] = open_with_trouble },
+        }
       },
 
       extensions = {
