@@ -1,0 +1,6 @@
+theme = tokyonight
+font-family = "MesloLGS Nerd Font Mono"
+font-family-bold = MesloLGS Nerd Font Mono Bold
+font-family-italic = MesloLGS Nerd Font Mono Italic
+font-family-bold-italic = MesloLGS Nerd Font Mono Bold Italic
+font-size = 14
