@@ -4,3 +4,8 @@ font-family-bold = MesloLGS Nerd Font Mono Bold
 font-family-italic = MesloLGS Nerd Font Mono Italic
 font-family-bold-italic = MesloLGS Nerd Font Mono Bold Italic
 font-size = 14
+macos-option-as-alt = true
+keybind = alt+h=unbind
+keybind = alt+j=unbind
+keybind = alt+k=unbind
+keybind = alt+l=unbind
