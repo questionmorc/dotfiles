@@ -14,6 +14,10 @@ setopt hist_find_no_dups
 
 # enable color support of ls and also add handy aliases
 export CLICOLOR=1
+#
+# Setting for the new UTF-8 terminal support
+LC_CTYPE=en_US.UTF-8
+LC_ALL=en_US.UTF-8
 
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
@@ -125,9 +129,10 @@ zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
-# Set up fzf key bindings and fuzzy completion
-eval "$(fzf --zsh)"
 
+# Set up fzf key bindings and fuzzy completion
+source <(fzf --zsh)
+#
 # [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 # export PATH="/opt/homebrew/opt/go@1.22/bin:$PATH"
 function gitstash() {

@@ -11,6 +11,7 @@ return {
             "lua-language-server ",
             "jsonnetfmt",
             "helm-ls",
+            -- "ruby_lsp",
             "llm-ls",
             "circleci-yaml-language-server",
             "bash-language-server",
