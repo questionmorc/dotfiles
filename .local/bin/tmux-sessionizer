@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
 
-if [[ $# -eq 1 ]]; then
-    selected=$1
-else
-    selected=$(find ~/code -mindepth 1 -maxdepth 1 -type d | fzf)
-fi
-
-if [[ -z $selected ]]; then
-    exit 0
-fi
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. $REPO_ROOT/tmux-common.sh
 
 selected_name=$(basename "$selected" | tr . _)
 tmux_running=$(pgrep tmux)
