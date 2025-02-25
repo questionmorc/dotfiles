@@ -7,9 +7,8 @@ else
     selected=$(
         (
             find ~/code -mindepth 1 -maxdepth 1 -type d;
-            echo ~/.config/nvim;
             echo ~/.config/hypr;
-            echo ~/.dotfiles;
+            echo ~/dotfiles/.config/nvim;
         ) | fzf
     )
 fi
