@@ -149,8 +149,8 @@ return {
       }
     })
     local extensions_list = {
-      "project",
-      "file_browser",
+      -- "project",
+      -- "file_browser",
       "fzf",
       "terraform_doc",
       "live_grep_args",
@@ -163,11 +163,18 @@ return {
 
     local builtin = require('telescope.builtin')
     vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = "telescope find files" })
-    vim.keymap.set('n', '<leader>fn', function()
+    vim.keymap.set('n', '<leader>fd', function()
       builtin.find_files {
         cwd = vim.fn.stdpath('config')
       }
     end, { desc = "telescope find nvim config files" })
+
+    vim.keymap.set('n', '<leader>fn', function()
+      builtin.find_files {
+        cwd = "$HOME/code/nix-cfg"
+        -- cwd = vim.fn.stdpath('config')
+      }
+    end, { desc = "telescope find nixos config files" })
     vim.keymap.set('n', '<leader>fg', builtin.git_files, { desc = "telescope git files" })
     vim.keymap.set('n', '<leader>pws', function()
       local word = vim.fn.expand("<cword>")
@@ -201,12 +208,12 @@ return {
         desc = "Telescope grep with args",
         silent = true
       })
-    vim.keymap.set({ "n" }, "<leader>fp", ":lua require'telescope'.extensions.project.project{}<CR>", {
-      desc = "Telescope Projects",
-      silent = true
-    })
-    vim.keymap.set({ "n" }, "<leader>fj", ":Telescope file_browser<CR>",
-      { desc = "Telescope File Browser", silent = true })
+    -- vim.keymap.set({ "n" }, "<leader>fp", ":lua require'telescope'.extensions.project.project{}<CR>", {
+    --   desc = "Telescope Projects",
+    --   silent = true
+    -- })
+    -- vim.keymap.set({ "n" }, "<leader>fj", ":Telescope file_browser<CR>",
+    --   { desc = "Telescope File Browser", silent = true })
     vim.keymap.set({ "n" }, "<leader>td", ":Telescope terraform_doc<CR>", { desc = "Terraform docs", silent = true })
     vim.keymap.set({ "n" }, "<leader>tg", ":Telescope terraform_doc full_name=hashicorp/google<CR>", {
       desc = "Terraform GCP docs",

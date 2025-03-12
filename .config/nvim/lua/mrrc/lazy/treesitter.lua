@@ -30,6 +30,7 @@ return {
                 "make",
                 "markdown",
                 "markdown_inline",
+                "nix",
                 "passwd",
                 "promql",
                 "python",
