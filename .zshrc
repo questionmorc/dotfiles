@@ -64,6 +64,7 @@ if command -v apt &> /dev/null; then
   path+=(/usr/local/go/bin)
 fi
 
+path+=(/$HOME/go/bin)
 export K9S_EDITOR=nvim
 
 
