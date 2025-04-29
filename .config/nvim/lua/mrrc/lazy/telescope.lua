@@ -1,7 +1,7 @@
 return {
   "nvim-telescope/telescope.nvim",
 
-  tag = "0.1.5",
+  tag = "0.1.8",
 
   dependencies = {
     "nvim-lua/plenary.nvim",
@@ -161,7 +161,7 @@ return {
 
     local builtin = require('telescope.builtin')
     vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = "telescope find files" })
-    vim.keymap.set('n', '<leader>fn', function()
+    vim.keymap.set('n', '<leader>fd', function()
       builtin.find_files {
         cwd = vim.fn.stdpath('config')
       }
@@ -210,12 +210,18 @@ return {
     vim.keymap.set({ "n" }, "<leader>fn", function()
       local current_dir = vim.fn.expand('%:p:h') -- Get the directory of the current buffer
       telescope.extensions.live_grep_args.live_grep_args({
-        search_dirs = { current_dir }        -- Set the search directory
+        search_dirs = { current_dir }            -- Set the search directory
       })
     end, {
       desc = "Telescope grep in current buffer's directory",
       silent = true
     })
+
+    vim.keymap.set('n', '<leader>fr', function()
+      builtin.find_files {
+        cwd = vim.fn.expand('%:p:h')
+      }
+    end, { desc = "telescope find files relative to current dir" })
     -- vim.keymap.set({ "n" }, "<leader>fp", ":lua require'telescope'.extensions.project.project{}<CR>", {
     --   desc = "Telescope Projects",
     --   silent = true
