@@ -21,7 +21,7 @@ return {
         typescript = { { "prettierd", "prettier" } },
         javascriptreact = { { "prettierd", "prettier" } },
         typescriptreact = { { "prettierd", "prettier" } },
-        json = { { "prettierd", "prettier" } },
+        json = { "prettierd" },
         graphql = { { "prettierd", "prettier" } },
         java = { "google-java-format" },
         ruby = { "standardrb" },
