@@ -1,4 +1,5 @@
 require("mrrc.set")
+require("mrrc.commands")
 require("mrrc.remap")
 
 require("mrrc.lazy-init")
