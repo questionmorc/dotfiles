@@ -12,6 +12,8 @@ setopt hist_ignore_dups
 setopt hist_find_no_dups
 # setopt SHARE_HISTORY
 
+autoload -Uz compinit
+compinit
 # enable color support of ls and also add handy aliases
 export CLICOLOR=1
 #
@@ -48,15 +50,14 @@ path+=($HOME/.local/bin)
 # What OS are we running?
 if [[ $(uname) == "Darwin" ]]; then
     #source "$ZSH_CUSTOM"/os/mac.zsh
-  path+=($HOME/code/backend/platform/bin)
   path+=(/opt/homebrew/Cellar/mysql-client/8.3.0/bin)
   export PATH=/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH
-  eval "$(mise activate -C ~/code/backend zsh)"
   GOROOT="$HOME/.local/share/mise/installs/go/1.22.1"
   export LIBRARY_PATH=/opt/homebrew/lib
   autoload -U +X bashcompinit && bashcompinit
   complete -o nospace -C /Users/malloul/.local/share/mise/installs/tanka/latest/bin/tk tk
   alias sed='gsed'
+  path+=(/opt/homebrew/bin)
 fi
 
 if command -v apt &> /dev/null; then
@@ -84,12 +85,11 @@ export PAGER="less"
 fpath=(~/.zsh.d/ $fpath)
 
 export EDITOR=nvim
-path+=($HOME/.tmux/plugins/tmuxifier/bin)
-export TMUXIFIER_LAYOUT_PATH="$HOME/dotfiles/tmux-layouts"
-#export TMUXIFIER_TMUX_ITERM_ATTACH="-CC"
-eval "$(tmuxifier init -)"
+# path+=($HOME/.tmux/plugins/tmuxifier/bin)
+# export TMUXIFIER_LAYOUT_PATH="$HOME/dotfiles/tmux-layouts"
+# #export TMUXIFIER_TMUX_ITERM_ATTACH="-CC"
+# eval "$(tmuxifier init -)"
 bindkey -M vicmd '/' history-incremental-search-backward
-
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
@@ -132,7 +132,6 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # Set up fzf key bindings and fuzzy completion
-source <(fzf --zsh)
 #
 # [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 # export PATH="/opt/homebrew/opt/go@1.22/bin:$PATH"
@@ -143,3 +142,12 @@ function gitstash() {
 function gitstashapply() {
     git stash apply $(git stash list | grep "zsh_stash_name_$1" | cut -d: -f1)
 }
+bindkey "^?" backward-delete-char
+# [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# source <(fzf --zsh)
+
+function my_init() {
+  [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+  source <(fzf --zsh)
+}
+zvm_after_init_commands+=(my_init)
