@@ -1,7 +1,7 @@
-require("mrrc.opts")
-require("mrrc.commands")
+require("mrrc.settings")
 require("mrrc.keymaps")
-require("mrrc.autocommands")
+require("mrrc.autocmds")
+require("mrrc.usercmds")
 require("mrrc.lazy-init")
 
 vim.g.netrw_browse_split = 0
