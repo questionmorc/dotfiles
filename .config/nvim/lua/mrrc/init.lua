@@ -1,6 +1,6 @@
-require("mrrc.set")
+require("mrrc.opts")
 require("mrrc.commands")
-require("mrrc.remap")
+require("mrrc.keymaps")
 
 require("mrrc.lazy-init")
 
