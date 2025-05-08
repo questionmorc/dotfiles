@@ -2,6 +2,7 @@ return {
   {
     "hrsh7th/nvim-cmp",
     lazy = false,
+    enabled = false,
     priority = 100,
     dependencies = {
       "onsails/lspkind.nvim",
@@ -43,7 +44,7 @@ return {
       cmp.setup({
         snippet = {
           expand = function(args)
-            require('luasnip').lsp_expand(args.body)             -- For `luasnip` users.
+            require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
           end,
         },
         mapping = cmp.mapping.preset.insert({
