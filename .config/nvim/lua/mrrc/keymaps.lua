@@ -20,7 +20,7 @@ vim.keymap.set({ "n" }, "<C-k>", "<cmd> TmuxNavigateUp<CR>", { desc = "TmuxNavig
 vim.keymap.set("n", "<leader>x", ':bd<CR>', { desc = "Close current buffer", silent = true })
 vim.keymap.set("n", "<tab>", ':bn<CR>', { desc = "Go to next buffer", silent = true })
 vim.keymap.set("n", "<S-tab>", ':bp<CR>', { desc = "Go to previous buffer", silent = true })
-vim.keymap.set("n", "<leader>b", ':enew<CR>', { desc = "Open new buffer", silent = true })
+vim.keymap.set("n", "<leader>bn", ':enew<CR>', { desc = "Open new buffer", silent = true })
 -- splits
 vim.keymap.set("n", "<M-,>", "<c-w>5<")
 vim.keymap.set("n", "<M-.>", "<c-w>5>")

@@ -29,7 +29,7 @@ return {
     scope = { enabled = false },
     scratch = { enabled = false },
     scroll = { enabled = false },
-    statuscolumn = { enabled = false },
+    statuscolumn = { enabled = true },
     terminal = { enabled = false },
     toggle = { enabled = false },
     util = { enabled = false },
@@ -38,11 +38,12 @@ return {
     zen = { enabled = true },
   },
   keys = {
-    { "<leader>gB", function() Snacks.gitbrowse() end, desc = "Git Browse", mode = { "n", "v" } },
-    -- { "<leader>bd", function() Snacks.bufdelete() end,       desc = "Buffer delete",       mode = "n" },
-    -- { "<leader>ba", function() Snacks.bufdelete.all() end,   desc = "Buffer delete all",   mode = "n" },
-    -- { "<leader>bo", function() Snacks.bufdelete.other() end, desc = "Buffer delete other", mode = "n" },
+    { "<leader>gB", function() Snacks.gitbrowse() end,       desc = "Git Browse",          mode = { "n", "v" } },
+    { "<leader>bd", function() Snacks.bufdelete() end,       desc = "Buffer delete",       mode = "n" },
+    { "<leader>ba", function() Snacks.bufdelete.all() end,   desc = "Buffer delete all",   mode = "n" },
+    { "<leader>bo", function() Snacks.bufdelete.other() end, desc = "Buffer delete other", mode = "n" },
     { "<leader>zz", function() Snacks.zen() end,             desc = "Toggle Zen Mode",     mode = "n" },
+    -- { "<leader>P", function() Snacks.terminal() end,        desc = "Toggle Terminal" },
   },
   config = function(_, opts)
     require("snacks").setup(opts)
