@@ -3,17 +3,20 @@ return {
   dependencies = {
     "williamboman/mason.nvim",
     "williamboman/mason-lspconfig.nvim",
-    "hrsh7th/cmp-nvim-lsp",
+    -- "hrsh7th/cmp-nvim-lsp",
     "j-hui/fidget.nvim",
+    'saghen/blink.cmp',
+
   },
 
   config = function()
-    local cmp_lsp = require("cmp_nvim_lsp")
-    local capabilities = vim.tbl_deep_extend(
-      "force",
-      {},
-      vim.lsp.protocol.make_client_capabilities(),
-      cmp_lsp.default_capabilities())
+    -- local cmp_lsp = require("cmp_nvim_lsp")
+    -- local capabilities = vim.tbl_deep_extend(
+    --   "force",
+    --   {},
+      -- vim.lsp.protocol.make_client_capabilities(),
+    --   cmp_lsp.default_capabilities())
+    local capabilities = require('blink.cmp').get_lsp_capabilities()
     require("fidget").setup({})
     require("mason").setup()
     require("mason-lspconfig").setup({
@@ -25,7 +28,7 @@ return {
         "dockerls",
         "docker_compose_language_service",
         "gopls",
-        "rnix",
+        -- "rnix",
         "pylsp",
         -- "nixd",
         -- "ruby_lsp",
