@@ -14,7 +14,7 @@ vim.api.nvim_create_user_command('Runts', function(opts)
   local script_path
 
   -- Check if the first argument is the --buffer-dir flag
-  if opts.fargs[1] == "--buffer-dir" then
+  if opts.fargs[1] == "-b" then
     use_buffer_dir = true
     script_path = opts.fargs[2] -- The script path is the second argument
   else
@@ -31,7 +31,7 @@ vim.api.nvim_create_user_command('Runts', function(opts)
   if use_buffer_dir then
     base_dir = vim.fn.expand('%:p:h') -- Get the directory of the current buffer
   else
-    base_dir = vim.fn.getcwd() -- Get the current working directory
+    base_dir = vim.fn.getcwd()        -- Get the current working directory
   end
 
   -- Construct the full script path
@@ -41,7 +41,16 @@ end, {
   nargs = "+", -- Require at least one argument
   desc = "Run the specified script in a terminal, optionally using the buffer's directory",
   complete = function(arglead, cmdline, cursorpos)
-    return { "--buffer-dir" } -- Provide completion for the optional flag
+    local args = vim.split(cmdline, "%s+")
+    if #args == 2 then
+      local file_completions = vim.fn.getcompletion(arglead, "file")
+      -- Add `-b` as an additional option
+      table.insert(file_completions, 1, "-b")
+      return file_completions
+    else
+      --j Otherwise, provide file path completion
+      return vim.fn.getcompletion(arglead, "file")
+    end
   end,
 })
 

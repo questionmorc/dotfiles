@@ -16,11 +16,14 @@ return {
       snippets = { preset = 'luasnip' },
 
       appearance = {
-        use_nvim_cmp_as_default = true,
+        -- use_nvim_cmp_as_default = true,
         nerd_font_variant = 'mono'
       },
       sources = {
-        default = { "lazydev", "lsp", "path", "snippets", "buffer" },
+        default = { "lsp", "path", "snippets", "buffer" },
+        per_filetype = {
+          lua = { inherit_defaults = true, "lazydev" }
+        },
         providers = {
           lazydev = {
             name = "LazyDev",
@@ -32,7 +35,10 @@ return {
       },
 
       signature = { enabled = true },
-      fuzzy = { implementation = "prefer_rust_with_warning" }
+      fuzzy = { implementation = "prefer_rust_with_warning" },
+      cmdline = {
+        completion = { menu = { auto_show = true } },
+      },
     },
   },
 }
