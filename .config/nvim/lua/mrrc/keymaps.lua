@@ -1,5 +1,3 @@
-vim.g.mapleader = " "
-
 -- Use ESC to exit terminal mode
 vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]])
 
@@ -28,7 +26,7 @@ vim.keymap.set("n", "<M-t>", "<C-W>+")
 vim.keymap.set("n", "<M-s>", "<C-W>-")
 
 vim.keymap.set("n", "<leader>fm", function()
-    require("conform").format { lsp_fallback = true }
+  require("conform").format { lsp_fallback = true }
 end, { desc = "format files" })
 
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "Swap with line below", silent = true })
@@ -86,14 +84,14 @@ vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><
 
 -- Comment
 vim.keymap.set("n", "<leader>/", function()
-    require("Comment.api").toggle.linewise.current()
+  require("Comment.api").toggle.linewise.current()
 end, { desc = "comment toggle" })
 
 vim.keymap.set(
-    "v",
-    "<leader>/",
-    "<ESC><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<CR>",
-    { desc = "comment toggle" }
+  "v",
+  "<leader>/",
+  "<ESC><cmd>lua require('Comment.api').toggle.linewise(vim.fn.visualmode())<CR>",
+  { desc = "comment toggle" }
 )
 
 
@@ -101,12 +99,9 @@ vim.keymap.set(
 vim.keymap.set("n", "<leader>wK", "<cmd>WhichKey <CR>", { desc = "whichkey all keymaps" })
 
 vim.keymap.set("n", "<leader>wk", function()
-    vim.cmd("WhichKey " .. vim.fn.input "WhichKey: ")
+  vim.cmd("WhichKey " .. vim.fn.input "WhichKey: ")
 end, { desc = "whichkey query lookup" })
 
 vim.keymap.set('n', '<leader>cr', function()
   vim.cmd('CopyRelativeFilePath')
 end, { noremap = true, silent = true, desc = "Copy Relative File path" })
-vim.keymap.set('n', '<leader>r', function()
-  vim.cmd('Runts app.ts')
-end, { noremap = true, silent = true, desc = "Run app.ts using RunScript command" })

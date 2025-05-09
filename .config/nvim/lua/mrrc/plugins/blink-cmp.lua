@@ -20,10 +20,10 @@ return {
         nerd_font_variant = 'mono'
       },
       sources = {
-        default = { "lsp", "path", "snippets", "buffer" },
-        per_filetype = {
-          lua = { inherit_defaults = true, "lazydev" }
-        },
+        default = { "lsp", "path", "snippets", "buffer", "lazydev" },
+        -- per_filetype = {
+        --   lua = { inherit_defaults = true, "lazydev" }
+        -- },
         providers = {
           lazydev = {
             name = "LazyDev",

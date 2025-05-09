@@ -1,3 +1,5 @@
+local terminal = require('toggleterm')
+
 vim.api.nvim_create_user_command('CopyRelativeFilePath', function()
   local filepath = vim.fn.expand('%') -- Get the relative file path of the current buffer
   if filepath == '' then
@@ -9,11 +11,8 @@ vim.api.nvim_create_user_command('CopyRelativeFilePath', function()
   print('Relative file path copied to clipboard: ' .. filepath)
 end, {})
 
-vim.keymap.set('n', '<leader>cr', function()
-  vim.cmd('CopyRelativeFilePath')
-end, { noremap = true, silent = true, desc = "Copy Relative File path" })
-
 vim.api.nvim_create_user_command('Runts', function(opts)
+
   local use_buffer_dir = false
   local script_path
 
@@ -40,7 +39,9 @@ vim.api.nvim_create_user_command('Runts', function(opts)
 
   -- Construct the full script path
   local full_script_path = base_dir .. "/" .. script_path
-  vim.cmd('split | terminal npx tsx ' .. full_script_path)
+  local command = "npx tsx " .. full_script_path
+  terminal.exec(command, nil, nil, nil, nil, nil, false, true)
+
 end, {
   nargs = "+", -- Require at least one argument
   desc = "Run the specified script in a terminal, optionally using the buffer's directory",
@@ -58,3 +59,8 @@ end, {
   end,
 })
 
+-- local lib = require("mrrc.library")
+--
+-- vim.keymap.set('n', '<leader>rt', function()
+--   lib.run_command_toggleterm("ls", { args = { "-l" }, use_buffer_dir = true })
+-- end, { noremap = true, silent = true, desc = "Run app.ts using RunScript command" })
