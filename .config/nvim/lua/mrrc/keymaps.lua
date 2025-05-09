@@ -103,3 +103,10 @@ vim.keymap.set("n", "<leader>wK", "<cmd>WhichKey <CR>", { desc = "whichkey all k
 vim.keymap.set("n", "<leader>wk", function()
     vim.cmd("WhichKey " .. vim.fn.input "WhichKey: ")
 end, { desc = "whichkey query lookup" })
+
+vim.keymap.set('n', '<leader>cr', function()
+  vim.cmd('CopyRelativeFilePath')
+end, { noremap = true, silent = true, desc = "Copy Relative File path" })
+vim.keymap.set('n', '<leader>r', function()
+  vim.cmd('Runts app.ts')
+end, { noremap = true, silent = true, desc = "Run app.ts using RunScript command" })

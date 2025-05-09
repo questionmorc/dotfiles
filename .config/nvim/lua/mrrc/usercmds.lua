@@ -5,9 +5,13 @@ vim.api.nvim_create_user_command('CopyRelativeFilePath', function()
     return
   end
   vim.fn.setreg('+', filepath) -- Copy the file path to the system clipboard
+  vim.fn.setreg('"', filepath) -- Copy the file path to the "yank" register
   print('Relative file path copied to clipboard: ' .. filepath)
 end, {})
 
+vim.keymap.set('n', '<leader>cr', function()
+  vim.cmd('CopyRelativeFilePath')
+end, { noremap = true, silent = true, desc = "Copy Relative File path" })
 
 vim.api.nvim_create_user_command('Runts', function(opts)
   local use_buffer_dir = false
@@ -40,7 +44,7 @@ vim.api.nvim_create_user_command('Runts', function(opts)
 end, {
   nargs = "+", -- Require at least one argument
   desc = "Run the specified script in a terminal, optionally using the buffer's directory",
-  complete = function(arglead, cmdline, cursorpos)
+  complete = function(arglead, cmdline)
     local args = vim.split(cmdline, "%s+")
     if #args == 2 then
       local file_completions = vim.fn.getcompletion(arglead, "file")
@@ -54,6 +58,3 @@ end, {
   end,
 })
 
-vim.keymap.set('n', '<leader>r', function()
-  vim.cmd('Runts app.ts')
-end, { noremap = true, silent = true, desc = "Run app.ts using RunScript command" })
