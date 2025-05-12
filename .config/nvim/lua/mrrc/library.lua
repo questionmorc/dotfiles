@@ -153,4 +153,19 @@ M.read_cache = function()
   return content
 end
 
+M.read_options_from_file = function(filename)
+  local options = {}
+  local filepath = vim.fn.stdpath("config") .. "/lua/mrrc/wrrk/" .. filename
+  local file = io.open(filepath, "r")
+  if not file then
+    error("Could not open file: " .. filepath)
+  end
+
+  for line in file:lines() do
+    table.insert(options, vim.trim(line))
+  end
+
+  file:close()
+  return options
+end
 return M
