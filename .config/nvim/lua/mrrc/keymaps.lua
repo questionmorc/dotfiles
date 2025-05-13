@@ -105,3 +105,11 @@ end, { desc = "whichkey query lookup" })
 vim.keymap.set('n', '<leader>cr', function()
   vim.cmd('CopyRelativeFilePath')
 end, { noremap = true, silent = true, desc = "Copy Relative File path" })
+
+vim.keymap.set('n', '<leader>cd', function()
+  vim.cmd('Copilot disable')
+end, { noremap = true, silent = true, desc = "Disable copilot ghost text" })
+
+vim.keymap.set('n', '<leader>ce', function()
+  vim.cmd('Copilot enable')
+end, { noremap = true, silent = true, desc = "Enable copilot ghost text" })
