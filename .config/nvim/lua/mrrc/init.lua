@@ -7,5 +7,10 @@ require("mrrc.settings")
 require("mrrc.keymaps")
 require("mrrc.autocmds")
 require("mrrc.usercmds")
-require("mrrc.runmaps")
+-- require("mrrc.runmaps")
 
+if jit.os == "OSX" then
+  print("Running on macOS")
+  -- require("mrrc.wrrk")
+  require("mrrc.wrrk.runmaps")
+end
