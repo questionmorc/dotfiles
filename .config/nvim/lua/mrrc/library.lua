@@ -63,8 +63,10 @@ M.command_with_completion = function(prefill, options)
   end, 10) -- Slight delay to ensure completion works
 end
 
---@param stack string
+---@param stack string
 M.run_spacelift_stack = function(stack)
+  -- M.write_cache(command_str)
+  -- terminal.exec(command_str, nil, nil, nil, nil, nil, false, true)
   M.run_command_toggleterm("spacectl", { "stack", "local-preview", "--id", stack }, { use_buffer_dir = true })
 end
 
