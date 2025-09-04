@@ -13,6 +13,7 @@ return {
             "helm-ls",
             -- "ruby_lsp",
             "llm-ls",
+            "regal",
             "circleci-yaml-language-server",
             "bash-language-server",
             "beautysh",

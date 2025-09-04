@@ -35,6 +35,7 @@ return {
         -- "golangci_lint_ls",
         "helm_ls",
         "jsonls",
+        "regal",
         -- "tsserver",
         "jsonnet_ls",
         "ts_ls",
