@@ -51,9 +51,9 @@ autocmd('LspAttach', {
       vim.tbl_extend("force", opts, { desc = "Rename the symbol under the cursor" }))
     vim.keymap.set("i", "<C-h>", function() vim.lsp.buf.signature_help() end,
       vim.tbl_extend("force", opts, { desc = "Show signature help" }))
-    vim.keymap.set("n", "[d", function() vim.diagnostic.goto_next() end,
+    vim.keymap.set("n", "[d", function() vim.lsp.diagnostic.goto_next() end,
       vim.tbl_extend("force", opts, { desc = "Go to the next diagnostic" }))
-    vim.keymap.set("n", "]d", function() vim.diagnostic.goto_prev() end,
+    vim.keymap.set("n", "]d", function() vim.lsp.diagnostic.goto_prev() end,
       vim.tbl_extend("force", opts, { desc = "Go to the previous diagnostic" }))
   end
 })
