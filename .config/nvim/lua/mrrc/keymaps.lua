@@ -106,10 +106,14 @@ vim.keymap.set('n', '<leader>cr', function()
   vim.cmd('CopyRelativeFilePath')
 end, { noremap = true, silent = true, desc = "Copy Relative File path" })
 
-vim.keymap.set('n', '<leader>cd', function()
+vim.keymap.set('n', '<leader>cpd', function()
   vim.cmd('Copilot disable')
 end, { noremap = true, silent = true, desc = "Disable copilot ghost text" })
 
-vim.keymap.set('n', '<leader>ce', function()
+vim.keymap.set('n', '<leader>cpe', function()
   vim.cmd('Copilot enable')
 end, { noremap = true, silent = true, desc = "Enable copilot ghost text" })
+
+vim.keymap.set('n', '<leader>z', function()
+  vim.cmd('Maximize')
+end, { noremap = true, silent = true, desc = "Setup copilot" })
