@@ -41,7 +41,7 @@ autocmd('LspAttach', {
       vim.tbl_extend("force", opts, { desc = "Show hover information" }))
     vim.keymap.set("n", "<leader>vws", function() vim.lsp.buf.workspace_symbol() end,
       vim.tbl_extend("force", opts, { desc = "Search workspace symbols" }))
-    vim.keymap.set("n", "<leader>vd", function() vim.diagnostic.open_float() end,
+    vim.keymap.set("n", "<leader>vd", function() vim.diagnostic.open_float({ focusable = true }) end,
       vim.tbl_extend("force", opts, { desc = "Show diagnostics in a floating window" }))
     vim.keymap.set("n", "<leader>vca", function() vim.lsp.buf.code_action() end,
       vim.tbl_extend("force", opts, { desc = "Show available code actions" }))
@@ -57,4 +57,3 @@ autocmd('LspAttach', {
       vim.tbl_extend("force", opts, { desc = "Go to the previous diagnostic" }))
   end
 })
-
