@@ -78,7 +78,8 @@ export K9S_EDITOR=nvim
 export KUBE_EDITOR=nvim
 
 eval "$(oh-my-posh init zsh --config '~/oh-my-posh-themes/mrrc.json')"
-eval "$(zoxide init --cmd cd zsh)"
+[[ $- == *i* ]] && [ -z "$DISABLE_ZOXIDE" ] && eval "$(zoxide init --cmd cd zsh)"
+# eval "$(zoxide init --cmd cd zsh)"
 
 # Bash/ZSH example using less
 export PAGER="less"
