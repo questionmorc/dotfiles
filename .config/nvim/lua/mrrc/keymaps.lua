@@ -1,5 +1,5 @@
 -- Use ESC to exit terminal mode
-vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]])
+vim.keymap.set('t', '<Esc><Esc>', [[<C-\><C-n>]])
 
 vim.keymap.set("i", "jk", "<Esc>", { desc = "Esc" })
 
