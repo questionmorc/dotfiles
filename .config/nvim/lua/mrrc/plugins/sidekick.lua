@@ -3,6 +3,7 @@ return {
   opts = {
     -- add any options here
     cli = {
+      picker = "telescope",
       mux = {
         backend = "tmux",
         enabled = true,

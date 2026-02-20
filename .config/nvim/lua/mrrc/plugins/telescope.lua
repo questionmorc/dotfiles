@@ -8,6 +8,7 @@ return {
     "nvim-telescope/telescope-live-grep-args.nvim",
     "ANGkeith/telescope-terraform-doc.nvim",
     { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+    "nvim-telescope/telescope-ui-select.nvim",
     version = "^1.0.0",
   },
 
@@ -134,6 +135,9 @@ return {
         file_browser = {},
         fzf = {},
         terraform_doc = {},
+        ["ui-select"] = {
+          require("telescope.themes").get_dropdown {}
+        },
         live_grep_args = {
           auto_quoting = true,
           mappings = {
@@ -152,7 +156,8 @@ return {
       "fzf",
       "terraform_doc",
       "live_grep_args",
-      "git_worktree"
+      "git_worktree",
+      "ui-select"
     }
     local telescope = require('telescope')
     for _, ext in ipairs(extensions_list) do
