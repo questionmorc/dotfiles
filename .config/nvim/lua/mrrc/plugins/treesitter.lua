@@ -1,85 +1,82 @@
 return {
-    "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate",
-    config = function()
-        require("nvim-treesitter.configs").setup({
+  "nvim-treesitter/nvim-treesitter",
+  lazy = false,
+  build = ":TSUpdate",
+  config = function()
+    -- Setup nvim-treesitter with minimal config (only install_dir is configurable)
+    require("nvim-treesitter").setup({
+      install_dir = vim.fn.stdpath('data') .. '/site'
+    })
 
-            ensure_installed = {
-                "awk",
-                "bash",
-                "c",
-                "csv",
-                "diff",
-                "dockerfile",
-                "git_config",
-                "gitcommit",
-                "gitignore",
-                "go",
-                "gomod",
-                "graphql",
-                "groovy",
-                "hcl",
-                "html",
-                "http",
-                "java",
-                "javascript",
-                "jq",
-                "json",
-                "jsonnet",
-                "lua",
-                "make",
-                "markdown",
-                "markdown_inline",
-                "nix",
-                "passwd",
-                "promql",
-                "python",
-                "regex",
-                "requirements",
-                "rust",
-                "sql",
-                "ssh_config",
-                "terraform",
-                "toml",
-                "typescript",
-                "vim",
-                "vimdoc",
-                "xml",
-                "yaml",
-            },
+    -- Install parsers asynchronously (will auto-install on first use)
+    local parsers = {
+      "awk",
+      "bash",
+      "c",
+      "c_sharp",
+      "csv",
+      "diff",
+      "dockerfile",
+      "git_config",
+      "gitcommit",
+      "gitignore",
+      "go",
+      "gomod",
+      "graphql",
+      "groovy",
+      "hcl",
+      "html",
+      "helm",
+      "http",
+      "java",
+      "javascript",
+      "jq",
+      "json",
+      "jsonnet",
+      "lua",
+      "make",
+      "markdown",
+      "markdown_inline",
+      "nix",
+      "passwd",
+      "promql",
+      "python",
+      "regex",
+      "requirements",
+      "rust",
+      "sql",
+      "ssh_config",
+      "terraform",
+      "toml",
+      "typescript",
+      "vim",
+      "vimdoc",
+      "xml",
+      "yaml",
+    }
 
-            -- Install parsers synchronously (only applied to `ensure_installed`)
-            sync_install = false,
+    -- Install parsers in background (non-blocking)
+    vim.defer_fn(function()
+      require("nvim-treesitter").install(parsers)
+    end, 100)
 
-            -- Automatically install missing parsers when entering buffer
-            -- Recommendation: set to false if you don"t have `tree-sitter` CLI installed locally
-            auto_install = true,
+    -- Enable treesitter-based indentation
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "*",
+      callback = function()
+        vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+      end,
+    })
 
-            indent = {
-                enable = true
-            },
+    -- Highlighting is automatically enabled via vim.treesitter.start() in Neovim
+    -- Additional vim regex highlighting for markdown
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "markdown",
+      callback = function()
+        vim.opt_local.syntax = "on"
+      end,
+    })
 
-            highlight = {
-                -- `false` will disable the whole extension
-                enable = true,
-
-                -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-                -- Set this to `true` if you depend on "syntax" being enabled (like for indentation).
-                -- Using this option may slow down your editor, and you may see some duplicate highlights.
-                -- Instead of true it can also be a list of languages
-                additional_vim_regex_highlighting = { "markdown" },
-            },
-        })
-
-        -- local treesitter_parser_config = require("nvim-treesitter.parsers").get_parser_configs()
-        -- treesitter_parser_config.templ = {
-        --     install_info = {
-        --         url = "https://github.com/vrischmann/tree-sitter-templ.git",
-        --         files = { "src/parser.c", "src/scanner.c" },
-        --         branch = "master",
-        --     },
-        -- }
-
-        -- vim.treesitter.language.register("templ", "templ")
-    end
+    -- vim.treesitter.language.register("templ", "templ")
+  end
 }

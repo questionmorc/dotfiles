@@ -1,7 +1,7 @@
 return {
   "nvim-telescope/telescope.nvim",
 
-  tag = "0.1.8",
+  tag = "v0.2.1",
 
   dependencies = {
     "nvim-lua/plenary.nvim",
@@ -9,11 +9,12 @@ return {
     "ANGkeith/telescope-terraform-doc.nvim",
     { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
     "nvim-telescope/telescope-ui-select.nvim",
-    version = "^1.0.0",
+    version = "*",
   },
 
   config = function()
     local lga_actions = require('telescope-live-grep-args.actions')
+    local actions = require('telescope.actions')
     -- local open_with_trouble = require("trouble.sources.telescope").open
 
     require('telescope').setup({
@@ -124,10 +125,10 @@ return {
           ".yarnrc.html",
         },
 
-        -- mappings = {
-        --   i = { ["<c-t>"] = open_with_trouble },
-        --   n = { ["<c-t>"] = open_with_trouble },
-        -- }
+        mappings = {
+          i = { ["<C-s>"] = actions.send_selected_to_qflist + actions.open_qflist },
+          n = { ["<C-s>"] = actions.send_selected_to_qflist + actions.open_qflist },
+        }
       },
 
       extensions = {
@@ -241,6 +242,11 @@ return {
     })
     vim.keymap.set({ "n" }, "<leader>tg", ":Telescope terraform_doc full_name=hashicorp/google<CR>", {
       desc = "Terraform GCP docs",
+      silent = true
+    })
+
+    vim.keymap.set({ "n" }, "<leader>tm", ":Telescope terraform_doc full_name=hashicorp/azurerm<CR>", {
+      desc = "Terraform Azure docs",
       silent = true
     })
 
