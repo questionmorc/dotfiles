@@ -1,0 +1,156 @@
+@define-color night rgba(26, 27, 38, 0.8); /* #1a1b26 */
+@define-color storm rgba(36, 40, 59, 0.8); /* #24283b */
+@define-color letters #a9b1d6;
+@define-color red #f7768e;
+@define-color yellow #e0af68;
+@define-color green #73daca;
+@define-color cyan #7dcfff;
+@define-color blue #7aa2f7;
+@define-color magenta #bb9af7;
+@define-color white #c0caf5;
+@define-color black #414868;
+
+/* -----------------------------------------------------
+ * General 
+ * ----------------------------------------------------- */
+
+* {
+    font-family: JetBrainsMonoNerd;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+window#waybar {
+    background-color: rgba(0,0,0,0);
+}
+
+/* -----------------------------------------------------
+ * Groups
+ * ----------------------------------------------------- */
+#lefties {
+	background-color: @night;
+	color: @letters;
+	border-style: solid;
+	border-color: @magenta @magenta @blue @blue;
+	border-radius: 10px;
+	border-width: 2px;
+	padding-left: 16px;
+	padding-right: 16px;
+}
+
+#tray {
+	background-color: @night;
+	color: @letters;
+	border-style:solid;
+	border-color: @magenta @magenta @blue @blue;
+	border-radius: 10px;
+	border-width: 2px;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+#hardware {
+	background-color: @night;
+	color: @letters;
+	border-style:solid;
+	border-color: @magenta @magenta @blue @blue;
+	border-radius: 10px;
+	border-width: 2px;
+	padding-left: 15px;
+	padding-right: 5px;
+}
+
+#controls {
+	background-color: @night;
+	color: @letters;
+	border-style:solid;
+	border-color: @magenta @magenta @blue @blue;
+	border-radius: 10px;
+	border-width: 2px;
+}
+
+#clock {
+	background-color: @night;
+	color: @letters;
+	border-style:solid;
+	border-color: @magenta @magenta @blue @blue;
+	border-radius: 10px;
+	border-width: 2px;
+	padding-left: 16px;
+	padding-right: 16px;
+}
+/* -----------------------------------------------------
+ * Workspaces
+ * ----------------------------------------------------- */
+#workspaces button {
+	padding: 0px;
+	background-color: transparent;
+	color: @magenta;
+	margin: 0px 1px 0px 1px;
+	padding-left: 8px;
+}
+
+#workspaces button.empty {
+	color: @letters;
+}
+
+#workspaces button.visible {
+	color: @magenta;
+}
+
+#workspaces button.active {
+	color: @cyan;
+}
+
+#workspaces button.urgent {
+	background-color: @red;
+	border-radius: 1em;
+	color: @blue;
+}
+#
+
+/* -----------------------------------------------------
+ * Modules
+ * ----------------------------------------------------- */
+
+/* Hardware */
+
+#cpu {
+	padding-right: 8px;
+}
+
+#memory {
+	padding-right: 15px;
+	padding-left: 15px;
+		
+}
+
+#temperature {
+	padding-right: 15px;	
+}
+
+#battery {
+	padding-right:8px;
+}
+/* Controls */
+
+#network  {
+	padding-left: 14px;
+	padding-right: 8px;	
+}
+
+#pulseaudio {
+	padding-left: 14px;
+	padding-right: 20px;	
+}
+
+#power {
+	background-color: @night;
+	color: @letters;
+	border-style:solid;
+	border-color: @magenta @magenta @blue @blue;
+	border-radius: 10px;
+	border-width: 2px;
+	padding-left: 10px;
+}
+
