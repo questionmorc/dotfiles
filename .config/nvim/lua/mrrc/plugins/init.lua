@@ -3,6 +3,7 @@ return {
     "christoomey/vim-tmux-navigator",
     lazy = false
   },
+  { "towolf/vim-helm", lazy = false },
   {
     'akinsho/bufferline.nvim',
     version = "*",

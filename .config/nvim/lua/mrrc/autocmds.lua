@@ -11,6 +11,8 @@ end
 vim.filetype.add({
   extension = {
     templ = 'templ',
+    jsonnet = 'jsonnet',
+    libsonnet = 'jsonnet',
   }
 })
 

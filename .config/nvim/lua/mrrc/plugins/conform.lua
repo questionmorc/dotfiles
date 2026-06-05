@@ -13,7 +13,7 @@ return {
       },
       formatters_by_ft = {
         lua = { "stylua" },
-        go = { "gofmt"},
+        go = { "gofmt" },
         -- jsonnnet = { "jsonnetfmt" },
         terraform = { "terraform_fmt" },
         svelte = { "prettier" },
@@ -37,6 +37,7 @@ return {
         -- toml = { "taplo" },
         css = { "prettier" },
         scss = { "prettier" },
+        python = { "ruff_fix", "ruff_format", "ruff_organize_imports" },
         -- ansible = { "ansible_lint" },
       },
     })

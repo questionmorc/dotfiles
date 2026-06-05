@@ -60,15 +60,15 @@ return {
       require("nvim-treesitter").install(parsers)
     end, 100)
 
-    -- Enable treesitter-based indentation
+    -- Enable treesitter highlighting and indentation for all filetypes
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "*",
-      callback = function()
-        vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+      callback = function(args)
+        pcall(vim.treesitter.start, args.buf)
+        vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
       end,
     })
 
-    -- Highlighting is automatically enabled via vim.treesitter.start() in Neovim
     -- Additional vim regex highlighting for markdown
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "markdown",

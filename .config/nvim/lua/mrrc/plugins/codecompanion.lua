@@ -43,11 +43,11 @@ return {
           enabled = true,
 
         },
-        vectorcode = {
-          opts = {
-            add_tool = true,
-          }
-        },
+        -- vectorcode = {
+        --   opts = {
+        --     add_tool = true,
+        --   }
+        -- },
         mcphub = {
           callback = "mcphub.extensions.codecompanion",
           opts = {

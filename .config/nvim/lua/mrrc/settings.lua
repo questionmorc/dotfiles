@@ -28,4 +28,7 @@ vim.opt.isfname:append("@-@")
 
 vim.opt.updatetime = 50
 
+-- rounded borders on all floats (hover, signature, diagnostics)
+vim.o.winborder = "rounded"
+
 -- vim.opt.colorcolumn = "80"
