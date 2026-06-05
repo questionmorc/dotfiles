@@ -1,0 +1,17 @@
+{
+  "lastChangelogVersion": "0.78.1",
+  "theme": "tokyonight-storm",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-4-8",
+  "defaultThinkingLevel": "xhigh",
+  "packages": [
+    "npm:pi-provider-litellm",
+    "npm:pi-mcp-adapter",
+    "npm:pi-lens"
+  ],
+  "skills": [
+    "~/.local/share/superpowers/skills",
+    "~/.local/share/caveman/skills"
+  ],
+  "hideThinkingBlock": true
+}

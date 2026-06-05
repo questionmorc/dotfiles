@@ -1,0 +1,83 @@
+{
+  "mcpServers": {
+    "context7": {
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "github": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "-e",
+        "GITHUB_HOST",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}",
+        "GITHUB_HOST": "https://github.cds.internal.unity3d.com/api/v3"
+      }
+    },
+    "grafana": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--pull=always",
+        "-e",
+        "GRAFANA_URL",
+        "-e",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN",
+        "mcp/grafana",
+        "-t",
+        "stdio",
+        "--disable-oncall",
+        "--disable-asserts",
+        "--disable-sift",
+        "--disable-admin",
+        "--disable-pyroscope",
+        "--disable-incident"
+      ],
+      "env": {
+        "GRAFANA_URL": "https://grafana-proxy.internal.unity3d.com",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "${GRAFANA_SERVICE_ACCOUNT_TOKEN}"
+      }
+    },
+    "mcp-rw-jira": {
+      "url": "https://mcp-jira.prd.it.unity3d.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${JIRA_RW_TOKEN}"
+      }
+    },
+    "pagerduty-mcp": {
+      "command": "uvx",
+      "args": [
+        "pagerduty-mcp",
+        "--enable-write-tools"
+      ],
+      "env": {
+        "PAGERDUTY_USER_API_KEY": "${PAGERDUTY_API}"
+      }
+    },
+    "terraform": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "TFE_TOKEN",
+        "-e",
+        "ENABLE_TF_OPERATIONS",
+        "hashicorp/terraform-mcp-server"
+      ],
+      "env": {
+        "TFE_TOKEN": "${TFE_TOKEN}",
+        "ENABLE_TF_OPERATIONS": "true"
+      }
+    }
+  }
+}
