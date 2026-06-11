@@ -1,0 +1,279 @@
+#!/usr/bin/env bash
+# tmux-agent: spawn a CLI agent into a named tmux window or session.
+# Triggers: tmux keybind (prefix+a) and the pi `tmux-agent` skill.
+set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Agent registry
+# ---------------------------------------------------------------------------
+# pi is the default. To change it, set TMUX_AGENT_DEFAULT or edit this value.
+# To add another agent later: add a case branch in agent_build_cmd and
+# agent_session_id, then list it in AGENTS so the picker activates.
+AGENT="${TMUX_AGENT_DEFAULT:-pi}"
+AGENTS=("pi")   # registered agents; picker (Task 4) activates when >1
+
+# Build the command to launch AGENT for a given context mode.
+# Args: name, mode (fresh|handoff|fork), payload (task text | doc path | session id), launch (auto|wait)
+# Echoes the command string to run as the window/session command.
+# For "wait" launch, the payload is NOT included here; it is sent later via send-keys.
+agent_build_cmd() {
+    local name="$1" mode="$2" payload="$3" launch="$4"
+    case "$AGENT" in
+        pi)
+            case "$mode" in
+                fresh)
+                    if [[ "$launch" == auto && -n "$payload" ]]; then
+                        printf 'pi -n %q %q' "$name" "$payload"
+                    else
+                        printf 'pi -n %q' "$name"
+                    fi
+                    ;;
+                handoff)
+                    if [[ "$launch" == auto ]]; then
+                        printf 'pi -n %q @%q' "$name" "$payload"
+                    else
+                        printf 'pi -n %q' "$name"
+                    fi
+                    ;;
+                fork)
+                    printf 'pi -n %q --fork %q' "$name" "$payload"
+                    ;;
+            esac
+            ;;
+        *)
+            echo "tmux-agent: unknown agent '$AGENT'" >&2
+            return 1
+            ;;
+    esac
+}
+
+# Echo the text that should be sent via send-keys in "wait" mode (no Enter).
+# Args: mode, payload
+agent_wait_text() {
+    local mode="$1" payload="$2"
+    case "$mode" in
+        fresh)   printf '%s' "$payload" ;;          # task text
+        handoff) printf '@%s' "$payload" ;;          # @doc path
+        fork)    printf '' ;;                          # nothing extra; context already forked
+    esac
+}
+
+# Find the newest session id for a working directory (pi only for now).
+# Args: workdir
+# Echoes the session UUID, or empty string if none found.
+agent_session_id() {
+    local workdir="$1"
+    case "$AGENT" in
+        pi)
+            local enc newest
+            enc="-$(printf '%s' "$workdir" | sed 's:/:-:g')--"
+            newest=$(ls -t "$HOME/.pi/agent/sessions/$enc"/*.jsonl 2>/dev/null | head -1 || true)
+            [[ -z "$newest" ]] && { echo ""; return 0; }
+            # filename: <timestamp>_<uuid>.jsonl  -> extract uuid
+            basename "$newest" .jsonl | sed 's/^[^_]*_//'
+            ;;
+        *)
+            echo ""
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Arguments (all optional; missing values are prompted for)
+# ---------------------------------------------------------------------------
+ARG_HANDOFF=""     # path to a handoff doc
+ARG_SESSION=""     # explicit session id to fork
+ARG_TASK=""        # task description / initial prompt
+ARG_MODE=""        # pre-selected context mode (fresh|handoff|fork)
+ARG_WORKDIR=""     # pre-selected working directory
+ARG_NAME=""        # pre-selected window/session name
+ARG_PLACEMENT=""   # pre-selected placement (window|session)
+ARG_LAUNCH=""      # pre-selected launch (auto|wait)
+NO_PROMPT=""       # when set, never call fzf; use flags/defaults only
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --handoff)   ARG_HANDOFF="$2"; shift 2 ;;
+        --session)   ARG_SESSION="$2"; shift 2 ;;
+        --task)      ARG_TASK="$2"; shift 2 ;;
+        --mode)      ARG_MODE="$2"; shift 2 ;;
+        --workdir)   ARG_WORKDIR="$2"; shift 2 ;;
+        --name)      ARG_NAME="$2"; shift 2 ;;
+        --placement) ARG_PLACEMENT="$2"; shift 2 ;;
+        --launch)    ARG_LAUNCH="$2"; shift 2 ;;
+        --agent)     AGENT="$2"; shift 2 ;;
+        --no-prompt) NO_PROMPT=1; shift ;;
+        *) echo "tmux-agent: unknown arg '$1'" >&2; exit 2 ;;
+    esac
+done
+
+# fzf single-select from stdin lines; echoes the chosen line.
+pick() { fzf --prompt="$1 > " --height=40% --reverse; }
+
+# Slugify text into a tmux-safe name: lowercase words, join with -, strip junk.
+slugify() {
+    printf '%s' "$1" \
+        | tr '[:upper:]' '[:lower:]' \
+        | tr -c 'a-z0-9' ' ' \
+        | awk '{ for(i=1;i<=NF && i<=4;i++){ printf (i>1?"-":"" ); printf "%s", $i } }'
+}
+
+# Sanitise an arbitrary string into a tmux window/session name.
+sanitize_name() { printf '%s' "$1" | tr "./ " "___" ; }
+
+# ---------------------------------------------------------------------------
+# Prompt flow
+# ---------------------------------------------------------------------------
+PANE_PATH="$(tmux display-message -p '#{pane_current_path}')"
+
+# Every step honours a pre-supplied flag. With --no-prompt, missing values fall
+# back to sensible defaults and fzf is never invoked (used by the /spawn
+# extension, which prompts through pi's own UI). Without --no-prompt, missing
+# values are prompted for via fzf (used by the tmux keybind).
+
+# 0. Agent picker. Dormant while only one agent is registered.
+if [[ ${#AGENTS[@]} -gt 1 && -z "$NO_PROMPT" ]]; then
+    chosen_agent="$(printf '%s\n' "${AGENTS[@]}" | pick 'agent')"
+    [[ -z "${chosen_agent:-}" ]] && exit 0
+    AGENT="$chosen_agent"
+fi
+
+# 1. Context (mode). Handoff option only offered when a doc was supplied.
+if [[ -n "$ARG_MODE" ]]; then
+    MODE="$ARG_MODE"
+elif [[ -n "$NO_PROMPT" ]]; then
+    MODE="fresh"
+else
+    context_opts=$'fresh\nfork'
+    [[ -n "$ARG_HANDOFF" ]] && context_opts=$'handoff\nfresh\nfork'
+    MODE="$(printf '%s' "$context_opts" | pick 'context')"
+fi
+[[ -z "${MODE:-}" ]] && exit 0
+
+# 2. Workdir.
+if [[ -n "$ARG_WORKDIR" ]]; then
+    WORKDIR="$ARG_WORKDIR"
+elif [[ -n "$NO_PROMPT" ]]; then
+    WORKDIR="$PANE_PATH"
+else
+    workdir_choice="$(printf 'current\npick dir\nnew worktree' | pick 'workdir')"
+    [[ -z "${workdir_choice:-}" ]] && exit 0
+    case "$workdir_choice" in
+        current)
+            WORKDIR="$PANE_PATH"
+            ;;
+        "pick dir")
+            WORKDIR="$(find ~/code -mindepth 1 -maxdepth 1 -type d | pick 'directory')"
+            [[ -z "${WORKDIR:-}" ]] && exit 0
+            ;;
+        "new worktree")
+            repo="$(find ~/code -mindepth 1 -maxdepth 1 -type d | pick 'repo')"
+            [[ -z "${repo:-}" ]] && exit 0
+            read -e -p "branch name: " branch
+            [[ -z "${branch:-}" ]] && exit 0
+            WORKDIR="$repo/.worktrees/$branch"
+            git -C "$repo" worktree add "$WORKDIR" -b "$branch"
+            ;;
+    esac
+fi
+
+# 3. Payload depends on mode.
+# In fresh mode with no --task supplied and prompting allowed (e.g. the keybind),
+# prompt for the task. fzf --print-query gives an editable field; the trailing
+# `|| true` guards its non-zero exit on a free-form query under `set -e`.
+if [[ "$MODE" == fresh && -z "$ARG_TASK" && -z "$NO_PROMPT" ]]; then
+    ARG_TASK="$(printf '' \
+        | fzf --prompt='task > ' --height=40% --reverse \
+              --print-query --query '' \
+        | head -1 || true)"
+fi
+case "$MODE" in
+    handoff) PAYLOAD="$ARG_HANDOFF" ;;
+    fork)    PAYLOAD="${ARG_SESSION:-$(agent_session_id "$WORKDIR")}" ;;
+    fresh)   PAYLOAD="$ARG_TASK" ;;
+esac
+if [[ "$MODE" == fork && -z "$PAYLOAD" ]]; then
+    echo "tmux-agent: no session found to fork for $WORKDIR" >&2
+    [[ -z "$NO_PROMPT" ]] && read -r -p "press enter to exit" _
+    exit 1
+fi
+
+# 4. Name, pre-filled with an editable slug from task or branch.
+# fzf --print-query gives a pre-filled, editable field that works on bash 3.2
+# (read -i is bash 4+ only). Type to edit, Enter to accept the query as-is.
+default_name="$(slugify "${ARG_TASK:-${branch:-agent}}")"
+[[ -z "$default_name" ]] && default_name="agent"
+if [[ -n "$ARG_NAME" ]]; then
+    NAME="$(sanitize_name "$ARG_NAME")"
+elif [[ -n "$NO_PROMPT" ]]; then
+    NAME="$(sanitize_name "$default_name")"
+else
+    # Note: fzf --print-query exits non-zero when the typed query does not match
+    # the (single) list item, the normal accept/edit case. `|| true` stops
+    # `set -e`/`pipefail` from killing the script while preserving the typed text.
+    raw_name="$(printf '%s\n' "$default_name" \
+        | fzf --prompt='name > ' --height=40% --reverse \
+              --print-query --query "$default_name" \
+        | head -1 || true)"
+    NAME="$(sanitize_name "${raw_name:-$default_name}")"
+fi
+
+# 5. Placement.
+if [[ -n "$ARG_PLACEMENT" ]]; then
+    PLACEMENT="$ARG_PLACEMENT"
+elif [[ -n "$NO_PROMPT" ]]; then
+    PLACEMENT="window"
+else
+    PLACEMENT="$(printf 'window\nsession' | pick 'placement')"
+    [[ -z "${PLACEMENT:-}" ]] && exit 0
+fi
+
+# 6. Launch.
+if [[ -n "$ARG_LAUNCH" ]]; then
+    LAUNCH="$ARG_LAUNCH"
+elif [[ -n "$NO_PROMPT" ]]; then
+    LAUNCH="wait"
+else
+    LAUNCH="$(printf 'auto\nwait' | pick 'launch')"
+    [[ -z "${LAUNCH:-}" ]] && exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Build command and spawn
+# ---------------------------------------------------------------------------
+CMD="$(agent_build_cmd "$NAME" "$MODE" "$PAYLOAD" "$LAUNCH")"
+CUR_SESSION="$(tmux display-message -p '#S')"
+
+if [[ "$PLACEMENT" == window ]]; then
+    tmux new-window -d -n "$NAME" -c "$WORKDIR" "$CMD"
+    TARGET="$CUR_SESSION:$NAME"
+else
+    # Ensure a unique session name; tmux refuses duplicates.
+    sess="$NAME"
+    i=2
+    while tmux has-session -t "=$sess" 2>/dev/null; do sess="${NAME}-${i}"; i=$((i+1)); done
+    NAME="$sess"
+    tmux new-session -ds "$NAME" -c "$WORKDIR" "$CMD"
+    TARGET="$NAME"
+fi
+
+# Wait mode: pre-fill the input without sending. Poll until the pane's
+# foreground command is the agent (pi), then literal-send the text, no Enter.
+if [[ "$LAUNCH" == wait ]]; then
+    wait_text="$(agent_wait_text "$MODE" "$PAYLOAD")"
+    if [[ -n "$wait_text" ]]; then
+        for _ in $(seq 1 50); do            # up to ~5s
+            fg="$(tmux display-message -p -t "$TARGET" '#{pane_current_command}' 2>/dev/null || true)"
+            [[ "$fg" == "$AGENT" || "$fg" == node ]] && break
+            sleep 0.1
+        done
+        sleep 0.3                            # small grace for the TUI to bind input
+        tmux send-keys -t "$TARGET" -l "$wait_text"
+    fi
+fi
+
+# Focus the destination.
+if [[ "$PLACEMENT" == window ]]; then
+    tmux select-window -t "$TARGET"
+else
+    tmux switch-client -t "$TARGET"
+fi
