@@ -1,13 +1,14 @@
 {
-  "lastChangelogVersion": "0.78.1",
+  "lastChangelogVersion": "0.79.1",
   "theme": "tokyonight-storm",
-  "defaultProvider": "anthropic",
+  "defaultProvider": "litellm",
   "defaultModel": "claude-opus-4-8",
   "defaultThinkingLevel": "xhigh",
   "packages": [
     "npm:pi-provider-litellm",
     "npm:pi-mcp-adapter",
-    "npm:pi-lens"
+    "npm:pi-lens",
+    "npm:pi-web-access"
   ],
   "skills": [
     "~/.local/share/superpowers/skills",
