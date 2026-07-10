@@ -1,0 +1,240 @@
+{
+  "defaultPersona": "default",
+  "skillRoots": [
+    "~/.pi/agent/skills",
+    "~/.local/share/superpowers/skills",
+    "~/.local/share/caveman/skills",
+    "~/.pi/agent/npm/node_modules/*/skills",
+    "~/.pi/agent/npm/node_modules/@*/*/skills"
+  ],
+  "personas": {
+    "default": {
+      "description": "Coding-focused DevOps/SWE toolkit: navigation, debugging, testing, review, planning.",
+      "extends": ["base"],
+      "skills": [
+        "~/.pi/agent/npm/node_modules/pi-lens/skills",
+        "code-review",
+        "implement",
+        "tdd",
+        "diagnosing-bugs",
+        "triage",
+        "to-spec",
+        "to-tickets",
+        "wayfinder",
+        "grill-me",
+        "teach",
+        "handoff",
+        "humanizer",
+        "caveman",
+        "git-guardrails-claude-code"
+      ]
+    },
+
+    "full": {
+      "description": "Everything (all discovered skills, including superpowers).",
+      "skills": ["*"]
+    },
+
+    "superpowers": {
+      "description": "The superpowers workflow skills (brainstorming, TDD, planning, debugging, etc.).",
+      "skills": ["~/.local/share/superpowers/skills"]
+    },
+
+    "pocock": {
+      "description": "Matt Pocock's engineering skills (mattpocock/skills): specs, tickets, triage, review, TDD, architecture.",
+      "skills": [
+        "setup-matt-pocock-skills",
+        "to-spec",
+        "to-tickets",
+        "triage",
+        "code-review",
+        "tdd",
+        "implement",
+        "diagnosing-bugs",
+        "codebase-design",
+        "domain-modeling",
+        "improve-codebase-architecture",
+        "design-an-interface",
+        "prototype",
+        "research",
+        "grilling",
+        "grill-me",
+        "grill-with-docs",
+        "handoff",
+        "teach",
+        "writing-great-skills",
+        "git-guardrails-claude-code"
+      ]
+    },
+
+    "base": {
+      "description": "Lean foundation: navigation, research, the KB, and workflow hygiene. Meant to be extended.",
+      "skills": [
+        "ast-grep",
+        "lsp-navigation",
+        "librarian",
+        "research",
+        "unity-kb"
+      ]
+    },
+
+    "minimal": {
+      "description": "Almost nothing. Code navigation plus the KB. Cleanest possible context.",
+      "skills": ["ast-grep", "lsp-navigation", "unity-kb"]
+    },
+
+    "unity-backend": {
+      "description": "Unity Muse / AI Authoring backend work. Query the KB before touching code.",
+      "extends": ["base"],
+      "thinking": "high",
+      "appendSystemPrompt": "Active persona: unity-backend. For anything touching Unity Muse, AI Authoring, Proton/Generators, Nibbler, AI-Config, Kronus, or the muse/muse-editor/proton-service repos, consult the unity-kb skill FIRST via the kb tools before exploring code.",
+      "skills": [
+        "unity-kb",
+        "diagnosing-bugs",
+        "tdd",
+        "test-driven-development",
+        "terraform-skill",
+        "writing-plans",
+        "executing-plans",
+        "subagent-driven-development",
+        "using-git-worktrees",
+        "finishing-a-development-branch",
+        "codebase-design",
+        "domain-modeling"
+      ]
+    },
+
+    "observability": {
+      "description": "Grafana debugging, dashboards, alerts, SLOs, gcx.",
+      "extends": ["base"],
+      "appendSystemPrompt": "Active persona: observability. Prefer Grafana MCP tools and the gcx workflow. Start diagnostics from datasources and alerts, not guesses.",
+      "skills": [
+        "debug-with-grafana",
+        "explore-datasources",
+        "investigate-alert",
+        "manage-dashboards",
+        "import-dashboards",
+        "generate-resource-stubs",
+        "gcx",
+        "gcx-observability",
+        "setup-gcx",
+        "scaffold-project"
+      ]
+    },
+
+    "dashboards": {
+      "description": "Grafana dashboards-as-code (foundation-sdk, import/generate/manage).",
+      "skills": [
+        "manage-dashboards",
+        "import-dashboards",
+        "generate-resource-stubs",
+        "scaffold-project",
+        "explore-datasources",
+        "gcx",
+        "ast-grep"
+      ]
+    },
+
+    "terraform": {
+      "description": "Terraform / OpenTofu infrastructure-as-code.",
+      "extends": ["base"],
+      "appendSystemPrompt": "Active persona: terraform. Follow the terraform-skill for module design, testing, and security scanning.",
+      "skills": ["terraform-skill", "diagnosing-bugs", "writing-plans"]
+    },
+
+    "architecture": {
+      "description": "Deep module design, interface exploration, refactoring strategy.",
+      "extends": ["base"],
+      "thinking": "xhigh",
+      "appendSystemPrompt": "Active persona: architecture. Think in terms of deep modules and clean seams. Design interfaces twice before committing.",
+      "skills": [
+        "codebase-design",
+        "design-an-interface",
+        "domain-modeling",
+        "improve-codebase-architecture",
+        "wayfinder",
+        "prototype",
+        "grilling",
+        "grill-with-docs"
+      ]
+    },
+
+    "planning": {
+      "description": "Spec to plan to issues. Brainstorm, grill, write plans, cut tickets.",
+      "extends": ["base"],
+      "appendSystemPrompt": "Active persona: planning. Do not write implementation code. Produce specs, plans, and issues.",
+      "skills": [
+        "writing-plans",
+        "executing-plans",
+        "to-spec",
+        "to-tickets",
+        "triage",
+        "grilling",
+        "wayfinder",
+        "dispatching-parallel-agents",
+        "subagent-driven-development"
+      ]
+    },
+
+    "review": {
+      "description": "Code review focused. Standards and spec review.",
+      "skills": [
+        "code-review",
+        "requesting-code-review",
+        "receiving-code-review",
+        "caveman-review",
+        "verification-before-completion",
+        "ast-grep",
+        "lsp-navigation"
+      ]
+    },
+
+    "docs-writing": {
+      "description": "Writing prose, docs, PRDs, and Google Workspace content.",
+      "appendSystemPrompt": "Active persona: docs-writing. Follow the humanizer skill. No em-dashes, no filler, plain human phrasing.",
+      "skills": [
+        "humanizer",
+        "research",
+        "teach",
+        "writing-plans",
+        "to-spec",
+        "to-tickets",
+        "librarian",
+        "gws-shared",
+        "gws-docs",
+        "gws-docs-write",
+        "gws-drive",
+        "gws-drive-upload",
+        "gws-sheets",
+        "gws-sheets-read",
+        "gws-sheets-append"
+      ]
+    },
+
+    "skill-authoring": {
+      "description": "Building and editing agent skills.",
+      "skills": [
+        "writing-skills",
+        "writing-great-skills",
+        "find-skills",
+        "setup-matt-pocock-skills",
+        "write-ast-grep-rule",
+        "write-tree-sitter-rule"
+      ]
+    },
+
+    "caveman": {
+      "description": "Token-efficient caveman mode toolset.",
+      "thinking": "low",
+      "skills": [
+        "caveman",
+        "caveman-commit",
+        "caveman-review",
+        "caveman-stats",
+        "caveman-help",
+        "cavecrew",
+        "compress"
+      ]
+    }
+  }
+}
