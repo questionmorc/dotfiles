@@ -19,7 +19,7 @@ import * as path from "node:path";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
 import type { Message } from "@earendil-works/pi-ai";
 import { StringEnum } from "@earendil-works/pi-ai";
-import { type ExtensionAPI, getMarkdownTheme, withFileMutationQueue } from "@earendil-works/pi-coding-agent";
+import { type ExtensionAPI, getAgentDir, getMarkdownTheme, withFileMutationQueue } from "@earendil-works/pi-coding-agent";
 import { Container, Markdown, Spacer, Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.js";
@@ -27,6 +27,65 @@ import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.js";
 const MAX_PARALLEL_TASKS = 8;
 const MAX_CONCURRENCY = 4;
 const COLLAPSED_ITEM_COUNT = 10;
+
+// ---------------------------------------------------------------------------
+// Settings isolation for spawned subagent processes
+//
+// A subagent is a separate `pi` process. It loads all extensions and fires
+// `session_start`, so any extension that calls `pi.setModel()` (e.g. personas)
+// would persist a model change to the SHARED ~/.pi/agent/settings.json, silently
+// corrupting the interactive session's default model/provider.
+//
+// Dead-bolt: run every child with PI_CODING_AGENT_DIR pointed at a mirror dir
+// where every entry is a symlink to the real config EXCEPT settings.json, which
+// is a throwaway copy. Any settings write from a child (by any extension, now or
+// future) lands in the copy and is discarded on exit. Reads of auth/agents/
+// extensions/skills/mcp/etc. still resolve to the real files via the symlinks.
+// Directory symlinks stay live, so newly added agents/extensions still appear.
+// On any failure we fall back to the inherited env (no isolation) rather than
+// breaking subagents.
+// ---------------------------------------------------------------------------
+let isolatedAgentDir: string | null = null;
+
+function ensureIsolatedAgentDir(): string | null {
+	try {
+		const realDir = getAgentDir();
+		if (!isolatedAgentDir) {
+			const mirror = fs.mkdtempSync(path.join(os.tmpdir(), "pi-subagent-cfg-"));
+			for (const entry of fs.readdirSync(realDir)) {
+				if (entry === "settings.json") continue;
+				const target = path.join(realDir, entry);
+				const link = path.join(mirror, entry);
+				try {
+					const type = fs.statSync(target).isDirectory() ? "dir" : "file";
+					fs.symlinkSync(target, link, type);
+				} catch {
+					/* skip an entry we cannot mirror */
+				}
+			}
+			isolatedAgentDir = mirror;
+			const cleanup = () => {
+				try {
+					fs.rmSync(mirror, { recursive: true, force: true });
+				} catch {
+					/* ignore */
+				}
+			};
+			process.once("exit", cleanup);
+			process.once("SIGINT", cleanup);
+			process.once("SIGTERM", cleanup);
+		}
+		// Refresh the private settings.json copy each call so subagents see the
+		// current non-model settings (transport/retry/etc.) with no write-back.
+		const realSettings = path.join(realDir, "settings.json");
+		if (fs.existsSync(realSettings)) {
+			fs.copyFileSync(realSettings, path.join(isolatedAgentDir, "settings.json"));
+		}
+		return isolatedAgentDir;
+	} catch {
+		return null;
+	}
+}
 
 function formatTokens(count: number): string {
 	if (count < 1000) return count.toString();
@@ -303,10 +362,15 @@ async function runSingleAgent(
 
 		const exitCode = await new Promise<number>((resolve) => {
 			const invocation = getPiInvocation(args);
+			const mirrorDir = ensureIsolatedAgentDir();
+			const childEnv = mirrorDir
+				? { ...process.env, PI_CODING_AGENT_DIR: mirrorDir }
+				: process.env;
 			const proc = spawn(invocation.command, invocation.args, {
 				cwd: cwd ?? defaultCwd,
 				shell: false,
 				stdio: ["ignore", "pipe", "pipe"],
+				env: childEnv,
 			});
 			let buffer = "";
 

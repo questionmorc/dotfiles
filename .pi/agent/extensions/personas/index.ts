@@ -545,8 +545,12 @@ export default function (pi: ExtensionAPI) {
 		}>(ctx, BASELINE_TYPE);
 
 		// Model: persona override, else restore baseline.
+		// Guard: only apply model changes in interactive sessions (ctx.hasUI).
+		// Non-interactive processes (subagents, print mode) have their model
+		// set via --model CLI flag. Calling pi.setModel() here would persist
+		// the change to settings.json, corrupting the user's default.
 		const wantModel = activation.model;
-		if (wantModel) {
+		if (ctx.hasUI && wantModel) {
 			const [provider, ...rest] = wantModel.includes("/")
 				? wantModel.split("/")
 				: [undefined, wantModel];
@@ -556,15 +560,15 @@ export default function (pi: ExtensionAPI) {
 				: undefined;
 			if (model) {
 				const ok = await pi.setModel(model);
-				if (!ok && ctx.hasUI)
+				if (!ok)
 					ctx.ui.notify(`persona: no API key for ${wantModel}`, "warn");
-			} else if (ctx.hasUI) {
+			} else {
 				ctx.ui.notify(
 					`persona: model "${wantModel}" not found (use "provider/id")`,
 					"warn",
 				);
 			}
-		} else if (baseline?.model) {
+		} else if (ctx.hasUI && baseline?.model) {
 			const model = ctx.modelRegistry?.find(
 				baseline.model.provider,
 				baseline.model.id,
