@@ -70,8 +70,8 @@
     "base": {
       "description": "Lean foundation: navigation, research, the KB, and workflow hygiene. Meant to be extended.",
       "skills": [
-        "ast-grep",
-        "lsp-navigation",
+        "pi-lens-ast-grep",
+        "pi-lens-lsp-navigation",
         "librarian",
         "research",
         "unity-kb"
@@ -80,7 +80,7 @@
 
     "minimal": {
       "description": "Almost nothing. Code navigation plus the KB. Cleanest possible context.",
-      "skills": ["ast-grep", "lsp-navigation", "unity-kb"]
+      "skills": ["pi-lens-ast-grep", "pi-lens-lsp-navigation", "unity-kb"]
     },
 
     "unity-backend": {
@@ -131,7 +131,7 @@
         "scaffold-project",
         "explore-datasources",
         "gcx",
-        "ast-grep"
+        "pi-lens-ast-grep"
       ]
     },
 
@@ -184,8 +184,8 @@
         "receiving-code-review",
         "caveman-review",
         "verification-before-completion",
-        "ast-grep",
-        "lsp-navigation"
+        "pi-lens-ast-grep",
+        "pi-lens-lsp-navigation"
       ]
     },
 
@@ -218,8 +218,8 @@
         "writing-great-skills",
         "find-skills",
         "setup-matt-pocock-skills",
-        "write-ast-grep-rule",
-        "write-tree-sitter-rule"
+        "pi-lens-write-ast-grep-rule",
+        "pi-lens-write-tree-sitter-rule"
       ]
     },
 
