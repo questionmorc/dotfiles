@@ -20,23 +20,31 @@ agent_build_cmd() {
     local name="$1" mode="$2" payload="$3" launch="$4"
     case "$AGENT" in
         pi)
+            # Mirror the interactive pi() wrapper in .zshrc: launch with
+            # --no-skills so the `personas` extension owns the whole skill set.
+            # tmux runs this command through a non-interactive shell, which does
+            # NOT source .zshrc, so the wrapper is bypassed and pi resolves to the
+            # raw binary. Add the flag here. Honor PI_ALL_SKILLS=1 as the same
+            # escape hatch the wrapper uses.
+            local ns="--no-skills "
+            [[ -n "${PI_ALL_SKILLS:-}" ]] && ns=""
             case "$mode" in
                 fresh)
                     if [[ "$launch" == auto && -n "$payload" ]]; then
-                        printf 'pi -n %q %q' "$name" "$payload"
+                        printf 'pi %s-n %q %q' "$ns" "$name" "$payload"
                     else
-                        printf 'pi -n %q' "$name"
+                        printf 'pi %s-n %q' "$ns" "$name"
                     fi
                     ;;
                 handoff)
                     if [[ "$launch" == auto ]]; then
-                        printf 'pi -n %q @%q' "$name" "$payload"
+                        printf 'pi %s-n %q @%q' "$ns" "$name" "$payload"
                     else
-                        printf 'pi -n %q' "$name"
+                        printf 'pi %s-n %q' "$ns" "$name"
                     fi
                     ;;
                 fork)
-                    printf 'pi -n %q --fork %q' "$name" "$payload"
+                    printf 'pi %s-n %q --fork %q' "$ns" "$name" "$payload"
                     ;;
             esac
             ;;
@@ -162,7 +170,12 @@ else
             WORKDIR="$PANE_PATH"
             ;;
         "pick dir")
-            WORKDIR="$(find ~/code -mindepth 1 -maxdepth 1 -type d | pick 'directory')"
+            WORKDIR="$(
+                (
+                    find ~/code -mindepth 1 -maxdepth 1 -type d
+                    echo ~/Documents/notes/unity-kb/unity-kb
+                ) | pick 'directory'
+            )"
             [[ -z "${WORKDIR:-}" ]] && exit 0
             ;;
         "new worktree")
