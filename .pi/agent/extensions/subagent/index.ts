@@ -12,7 +12,6 @@
  * Uses JSON mode to capture structured output from subagents.
  */
 
-import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -23,10 +22,31 @@ import { type ExtensionAPI, getAgentDir, getMarkdownTheme, withFileMutationQueue
 import { Container, Markdown, Spacer, Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.js";
+import {
+	type ChildOutcome,
+	createReapNoteCollector,
+	fileReapNote,
+	killLiveChildren,
+	runChild,
+} from "./child-runner.js";
 
 const MAX_PARALLEL_TASKS = 8;
 const MAX_CONCURRENCY = 4;
 const COLLAPSED_ITEM_COUNT = 10;
+const SETTLE_GRACE_MS = 5_000;
+const SIGKILL_ESCALATION_MS = 5_000;
+const IDLE_TIMEOUT_MS = 15 * 60_000;
+
+let childReaperHooksInstalled = false;
+
+/** Group-kills any subagent still being reaped when the host process goes away. */
+function ensureChildReaperHooks(): void {
+	if (childReaperHooksInstalled) return;
+	childReaperHooksInstalled = true;
+	process.once("exit", killLiveChildren);
+	process.once("SIGINT", killLiveChildren);
+	process.once("SIGTERM", killLiveChildren);
+}
 
 // ---------------------------------------------------------------------------
 // Settings isolation for spawned subagent processes
@@ -203,6 +223,9 @@ interface SingleResult {
 	agentSource: "user" | "project" | "unknown";
 	task: string;
 	exitCode: number;
+	signal?: string | null;
+	outcome?: ChildOutcome;
+	terminationNote?: string;
 	messages: Message[];
 	stderr: string;
 	usage: UsageStats;
@@ -217,6 +240,27 @@ interface SubagentDetails {
 	agentScope: AgentScope;
 	projectAgentsDir: string | null;
 	results: SingleResult[];
+	reapNotes?: string[];
+}
+
+function isStillRunning(result: SingleResult): boolean {
+	return result.outcome === undefined && result.exitCode === -1;
+}
+
+function failureReason(result: SingleResult): string | undefined {
+	if (isStillRunning(result)) return undefined;
+	switch (result.outcome) {
+		case "aborted":
+			return "aborted";
+		case "idle-timeout":
+			return `no output for ${IDLE_TIMEOUT_MS / 60_000} minutes`;
+		case "spawn-error":
+			return "could not start";
+		case "exited":
+			return `exited before completing (code ${result.exitCode}${result.signal ? `, ${result.signal}` : ""})`;
+		default:
+			return result.stopReason === "error" || result.stopReason === "aborted" ? result.stopReason : undefined;
+	}
 }
 
 function getFinalOutput(messages: Message[]): string {
@@ -314,6 +358,7 @@ async function runSingleAgent(
 			agentSource: "unknown",
 			task,
 			exitCode: 1,
+			outcome: "spawn-error",
 			messages: [],
 			stderr: `Unknown agent: "${agentName}". Available agents: ${available}.`,
 			usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 0 },
@@ -324,6 +369,7 @@ async function runSingleAgent(
 	const args: string[] = ["--mode", "json", "-p", "--no-session"];
 	if (agent.model) args.push("--model", agent.model);
 	if (agent.tools && agent.tools.length > 0) args.push("--tools", agent.tools.join(","));
+	if (agent.persona) args.push("--no-skills", "--persona", agent.persona);
 
 	let tmpPromptDir: string | null = null;
 	let tmpPromptPath: string | null = null;
@@ -358,94 +404,58 @@ async function runSingleAgent(
 		}
 
 		args.push(`Task: ${task}`);
-		let wasAborted = false;
 
-		const exitCode = await new Promise<number>((resolve) => {
-			const invocation = getPiInvocation(args);
-			const mirrorDir = ensureIsolatedAgentDir();
-			const childEnv = mirrorDir
-				? { ...process.env, PI_CODING_AGENT_DIR: mirrorDir }
-				: process.env;
-			const proc = spawn(invocation.command, invocation.args, {
-				cwd: cwd ?? defaultCwd,
-				shell: false,
-				stdio: ["ignore", "pipe", "pipe"],
-				env: childEnv,
-			});
-			let buffer = "";
+		const absorbEvent = (event: Record<string, any>) => {
+			if (event.type === "message_end" && event.message) {
+				const msg = event.message as Message;
+				currentResult.messages.push(msg);
 
-			const processLine = (line: string) => {
-				if (!line.trim()) return;
-				let event: any;
-				try {
-					event = JSON.parse(line);
-				} catch {
-					return;
-				}
-
-				if (event.type === "message_end" && event.message) {
-					const msg = event.message as Message;
-					currentResult.messages.push(msg);
-
-					if (msg.role === "assistant") {
-						currentResult.usage.turns++;
-						const usage = msg.usage;
-						if (usage) {
-							currentResult.usage.input += usage.input || 0;
-							currentResult.usage.output += usage.output || 0;
-							currentResult.usage.cacheRead += usage.cacheRead || 0;
-							currentResult.usage.cacheWrite += usage.cacheWrite || 0;
-							currentResult.usage.cost += usage.cost?.total || 0;
-							currentResult.usage.contextTokens = usage.totalTokens || 0;
-						}
-						if (!currentResult.model && msg.model) currentResult.model = msg.model;
-						if (msg.stopReason) currentResult.stopReason = msg.stopReason;
-						if (msg.errorMessage) currentResult.errorMessage = msg.errorMessage;
+				if (msg.role === "assistant") {
+					currentResult.usage.turns++;
+					const usage = msg.usage;
+					if (usage) {
+						currentResult.usage.input += usage.input || 0;
+						currentResult.usage.output += usage.output || 0;
+						currentResult.usage.cacheRead += usage.cacheRead || 0;
+						currentResult.usage.cacheWrite += usage.cacheWrite || 0;
+						currentResult.usage.cost += usage.cost?.total || 0;
+						currentResult.usage.contextTokens = usage.totalTokens || 0;
 					}
-					emitUpdate();
+					if (!currentResult.model && msg.model) currentResult.model = msg.model;
+					if (msg.stopReason) currentResult.stopReason = msg.stopReason;
+					if (msg.errorMessage) currentResult.errorMessage = msg.errorMessage;
 				}
-
-				if (event.type === "tool_result_end" && event.message) {
-					currentResult.messages.push(event.message as Message);
-					emitUpdate();
-				}
-			};
-
-			proc.stdout.on("data", (data) => {
-				buffer += data.toString();
-				const lines = buffer.split("\n");
-				buffer = lines.pop() || "";
-				for (const line of lines) processLine(line);
-			});
-
-			proc.stderr.on("data", (data) => {
-				currentResult.stderr += data.toString();
-			});
-
-			proc.on("close", (code) => {
-				if (buffer.trim()) processLine(buffer);
-				resolve(code ?? 0);
-			});
-
-			proc.on("error", () => {
-				resolve(1);
-			});
-
-			if (signal) {
-				const killProc = () => {
-					wasAborted = true;
-					proc.kill("SIGTERM");
-					setTimeout(() => {
-						if (!proc.killed) proc.kill("SIGKILL");
-					}, 5000);
-				};
-				if (signal.aborted) killProc();
-				else signal.addEventListener("abort", killProc, { once: true });
+				emitUpdate();
 			}
+
+			if (event.type === "tool_result_end" && event.message) {
+				currentResult.messages.push(event.message as Message);
+				emitUpdate();
+			}
+		};
+
+		ensureChildReaperHooks();
+		const invocation = getPiInvocation(args);
+		const mirrorDir = ensureIsolatedAgentDir();
+		const outcome = await runChild({
+			command: invocation.command,
+			args: invocation.args,
+			cwd: cwd ?? defaultCwd,
+			env: mirrorDir ? { ...process.env, PI_CODING_AGENT_DIR: mirrorDir } : process.env,
+			label: agentName,
+			signal,
+			settleGraceMs: SETTLE_GRACE_MS,
+			killEscalationMs: SIGKILL_ESCALATION_MS,
+			idleTimeoutMs: IDLE_TIMEOUT_MS,
+			onEvent: absorbEvent,
+			onReap: fileReapNote,
 		});
 
-		currentResult.exitCode = exitCode;
-		if (wasAborted) throw new Error("Subagent was aborted");
+		currentResult.outcome = outcome.outcome;
+		currentResult.exitCode = outcome.exitCode ?? 0;
+		currentResult.signal = outcome.signal;
+		currentResult.terminationNote = outcome.terminationNote;
+		if (outcome.stderr) currentResult.stderr = outcome.stderr;
 		return currentResult;
 	} finally {
 		if (tmpPromptPath)
@@ -515,6 +525,7 @@ export default function (pi: ExtensionAPI) {
 			const hasSingle = Boolean(params.agent && params.task);
 			const modeCount = Number(hasChain) + Number(hasTasks) + Number(hasSingle);
 
+			const collectReapNotes = createReapNoteCollector();
 			const makeDetails =
 				(mode: "single" | "parallel" | "chain") =>
 				(results: SingleResult[]): SubagentDetails => ({
@@ -522,6 +533,7 @@ export default function (pi: ExtensionAPI) {
 					agentScope,
 					projectAgentsDir: discovery.projectAgentsDir,
 					results,
+					reapNotes: collectReapNotes(),
 				});
 
 			if (modeCount !== 1) {
@@ -598,13 +610,14 @@ export default function (pi: ExtensionAPI) {
 					);
 					results.push(result);
 
-					const isError =
-						result.exitCode !== 0 || result.stopReason === "error" || result.stopReason === "aborted";
-					if (isError) {
+					const reason = failureReason(result);
+					if (reason) {
 						const errorMsg =
 							result.errorMessage || result.stderr || getFinalOutput(result.messages) || "(no output)";
 						return {
-							content: [{ type: "text", text: `Chain stopped at step ${i + 1} (${step.agent}): ${errorMsg}` }],
+							content: [
+								{ type: "text", text: `Chain stopped at step ${i + 1} (${step.agent}, ${reason}): ${errorMsg}` },
+							],
 							details: makeDetails("chain")(results),
 							isError: true,
 						};
@@ -638,7 +651,7 @@ export default function (pi: ExtensionAPI) {
 						agent: params.tasks[i].agent,
 						agentSource: "unknown",
 						task: params.tasks[i].task,
-						exitCode: -1, // -1 = still running
+						exitCode: -1,
 						messages: [],
 						stderr: "",
 						usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 0 },
@@ -647,8 +660,8 @@ export default function (pi: ExtensionAPI) {
 
 				const emitParallelUpdate = () => {
 					if (onUpdate) {
-						const running = allResults.filter((r) => r.exitCode === -1).length;
-						const done = allResults.filter((r) => r.exitCode !== -1).length;
+						const running = allResults.filter(isStillRunning).length;
+						const done = allResults.length - running;
 						onUpdate({
 							content: [
 								{ type: "text", text: `Parallel: ${done}/${allResults.length} done, ${running} running...` },
@@ -681,11 +694,13 @@ export default function (pi: ExtensionAPI) {
 					return result;
 				});
 
-				const successCount = results.filter((r) => r.exitCode === 0).length;
+				const successCount = results.filter((r) => !failureReason(r)).length;
 				const summaries = results.map((r) => {
 					const output = getFinalOutput(r.messages);
 					const preview = output.slice(0, 100) + (output.length > 100 ? "..." : "");
-					return `[${r.agent}] ${r.exitCode === 0 ? "completed" : "failed"}: ${preview || "(no output)"}`;
+					const reason = failureReason(r);
+					const status = reason ? `failed (${reason})` : "completed";
+					return `[${r.agent}] ${status}: ${preview || "(no output)"}`;
 				});
 				return {
 					content: [
@@ -710,12 +725,12 @@ export default function (pi: ExtensionAPI) {
 					onUpdate,
 					makeDetails("single"),
 				);
-				const isError = result.exitCode !== 0 || result.stopReason === "error" || result.stopReason === "aborted";
-				if (isError) {
+				const reason = failureReason(result);
+				if (reason) {
 					const errorMsg =
 						result.errorMessage || result.stderr || getFinalOutput(result.messages) || "(no output)";
 					return {
-						content: [{ type: "text", text: `Agent ${result.stopReason || "failed"}: ${errorMsg}` }],
+						content: [{ type: "text", text: `Agent ${reason}: ${errorMsg}` }],
 						details: makeDetails("single")([result]),
 						isError: true,
 					};
@@ -779,9 +794,17 @@ export default function (pi: ExtensionAPI) {
 
 		renderResult(result, { expanded }, theme, _context) {
 			const details = result.details as SubagentDetails | undefined;
+			const withReapNotes = (body: Container | Text) => {
+				const notes = details?.reapNotes ?? [];
+				if (notes.length === 0) return body;
+				const wrapper = new Container();
+				wrapper.addChild(body);
+				for (const note of notes) wrapper.addChild(new Text(theme.fg("muted", `⚠ ${note}`), 0, 0));
+				return wrapper;
+			};
 			if (!details || details.results.length === 0) {
 				const text = result.content[0];
-				return new Text(text?.type === "text" ? text.text : "(no output)", 0, 0);
+				return withReapNotes(new Text(text?.type === "text" ? text.text : "(no output)", 0, 0));
 			}
 
 			const mdTheme = getMarkdownTheme();
@@ -804,7 +827,8 @@ export default function (pi: ExtensionAPI) {
 
 			if (details.mode === "single" && details.results.length === 1) {
 				const r = details.results[0];
-				const isError = r.exitCode !== 0 || r.stopReason === "error" || r.stopReason === "aborted";
+				const reason = failureReason(r);
+				const isError = Boolean(reason);
 				const icon = isError ? theme.fg("error", "✗") : theme.fg("success", "✓");
 				const displayItems = getDisplayItems(r.messages);
 				const finalOutput = getFinalOutput(r.messages);
@@ -812,7 +836,7 @@ export default function (pi: ExtensionAPI) {
 				if (expanded) {
 					const container = new Container();
 					let header = `${icon} ${theme.fg("toolTitle", theme.bold(r.agent))}${theme.fg("muted", ` (${r.agentSource})`)}`;
-					if (isError && r.stopReason) header += ` ${theme.fg("error", `[${r.stopReason}]`)}`;
+					if (reason) header += ` ${theme.fg("error", `[${reason}]`)}`;
 					container.addChild(new Text(header, 0, 0));
 					if (isError && r.errorMessage)
 						container.addChild(new Text(theme.fg("error", `Error: ${r.errorMessage}`), 0, 0));
@@ -844,11 +868,11 @@ export default function (pi: ExtensionAPI) {
 						container.addChild(new Spacer(1));
 						container.addChild(new Text(theme.fg("dim", usageStr), 0, 0));
 					}
-					return container;
+					return withReapNotes(container);
 				}
 
 				let text = `${icon} ${theme.fg("toolTitle", theme.bold(r.agent))}${theme.fg("muted", ` (${r.agentSource})`)}`;
-				if (isError && r.stopReason) text += ` ${theme.fg("error", `[${r.stopReason}]`)}`;
+				if (reason) text += ` ${theme.fg("error", `[${reason}]`)}`;
 				if (isError && r.errorMessage) text += `\n${theme.fg("error", `Error: ${r.errorMessage}`)}`;
 				else if (displayItems.length === 0) text += `\n${theme.fg("muted", "(no output)")}`;
 				else {
@@ -857,7 +881,7 @@ export default function (pi: ExtensionAPI) {
 				}
 				const usageStr = formatUsageStats(r.usage, r.model);
 				if (usageStr) text += `\n${theme.fg("dim", usageStr)}`;
-				return new Text(text, 0, 0);
+				return withReapNotes(new Text(text, 0, 0));
 			}
 
 			const aggregateUsage = (results: SingleResult[]) => {
@@ -874,7 +898,7 @@ export default function (pi: ExtensionAPI) {
 			};
 
 			if (details.mode === "chain") {
-				const successCount = details.results.filter((r) => r.exitCode === 0).length;
+				const successCount = details.results.filter((r) => !failureReason(r)).length;
 				const icon = successCount === details.results.length ? theme.fg("success", "✓") : theme.fg("error", "✗");
 
 				if (expanded) {
@@ -891,7 +915,7 @@ export default function (pi: ExtensionAPI) {
 					);
 
 					for (const r of details.results) {
-						const rIcon = r.exitCode === 0 ? theme.fg("success", "✓") : theme.fg("error", "✗");
+						const rIcon = failureReason(r) ? theme.fg("error", "✗") : theme.fg("success", "✓");
 						const displayItems = getDisplayItems(r.messages);
 						const finalOutput = getFinalOutput(r.messages);
 
@@ -933,17 +957,16 @@ export default function (pi: ExtensionAPI) {
 						container.addChild(new Spacer(1));
 						container.addChild(new Text(theme.fg("dim", `Total: ${usageStr}`), 0, 0));
 					}
-					return container;
+					return withReapNotes(container);
 				}
 
-				// Collapsed view
 				let text =
 					icon +
 					" " +
 					theme.fg("toolTitle", theme.bold("chain ")) +
 					theme.fg("accent", `${successCount}/${details.results.length} steps`);
 				for (const r of details.results) {
-					const rIcon = r.exitCode === 0 ? theme.fg("success", "✓") : theme.fg("error", "✗");
+					const rIcon = failureReason(r) ? theme.fg("error", "✗") : theme.fg("success", "✓");
 					const displayItems = getDisplayItems(r.messages);
 					text += `\n\n${theme.fg("muted", `─── Step ${r.step}: `)}${theme.fg("accent", r.agent)} ${rIcon}`;
 					if (displayItems.length === 0) text += `\n${theme.fg("muted", "(no output)")}`;
@@ -952,13 +975,14 @@ export default function (pi: ExtensionAPI) {
 				const usageStr = formatUsageStats(aggregateUsage(details.results));
 				if (usageStr) text += `\n\n${theme.fg("dim", `Total: ${usageStr}`)}`;
 				text += `\n${theme.fg("muted", "(Ctrl+O to expand)")}`;
-				return new Text(text, 0, 0);
+				return withReapNotes(new Text(text, 0, 0));
 			}
 
 			if (details.mode === "parallel") {
-				const running = details.results.filter((r) => r.exitCode === -1).length;
-				const successCount = details.results.filter((r) => r.exitCode === 0).length;
-				const failCount = details.results.filter((r) => r.exitCode > 0).length;
+				const running = details.results.filter(isStillRunning).length;
+				const finished = details.results.filter((r) => !isStillRunning(r));
+				const successCount = finished.filter((r) => !failureReason(r)).length;
+				const failCount = finished.length - successCount;
 				const isRunning = running > 0;
 				const icon = isRunning
 					? theme.fg("warning", "⏳")
@@ -980,7 +1004,7 @@ export default function (pi: ExtensionAPI) {
 					);
 
 					for (const r of details.results) {
-						const rIcon = r.exitCode === 0 ? theme.fg("success", "✓") : theme.fg("error", "✗");
+						const rIcon = failureReason(r) ? theme.fg("error", "✗") : theme.fg("success", "✓");
 						const displayItems = getDisplayItems(r.messages);
 						const finalOutput = getFinalOutput(r.messages);
 
@@ -1018,22 +1042,20 @@ export default function (pi: ExtensionAPI) {
 						container.addChild(new Spacer(1));
 						container.addChild(new Text(theme.fg("dim", `Total: ${usageStr}`), 0, 0));
 					}
-					return container;
+					return withReapNotes(container);
 				}
 
-				// Collapsed view (or still running)
 				let text = `${icon} ${theme.fg("toolTitle", theme.bold("parallel "))}${theme.fg("accent", status)}`;
 				for (const r of details.results) {
-					const rIcon =
-						r.exitCode === -1
-							? theme.fg("warning", "⏳")
-							: r.exitCode === 0
-								? theme.fg("success", "✓")
-								: theme.fg("error", "✗");
+					const rIcon = isStillRunning(r)
+						? theme.fg("warning", "⏳")
+						: failureReason(r)
+							? theme.fg("error", "✗")
+							: theme.fg("success", "✓");
 					const displayItems = getDisplayItems(r.messages);
 					text += `\n\n${theme.fg("muted", "─── ")}${theme.fg("accent", r.agent)} ${rIcon}`;
 					if (displayItems.length === 0)
-						text += `\n${theme.fg("muted", r.exitCode === -1 ? "(running...)" : "(no output)")}`;
+						text += `\n${theme.fg("muted", isStillRunning(r) ? "(running...)" : "(no output)")}`;
 					else text += `\n${renderDisplayItems(displayItems, 5)}`;
 				}
 				if (!isRunning) {
@@ -1041,11 +1063,11 @@ export default function (pi: ExtensionAPI) {
 					if (usageStr) text += `\n\n${theme.fg("dim", `Total: ${usageStr}`)}`;
 				}
 				if (!expanded) text += `\n${theme.fg("muted", "(Ctrl+O to expand)")}`;
-				return new Text(text, 0, 0);
+				return withReapNotes(new Text(text, 0, 0));
 			}
 
 			const text = result.content[0];
-			return new Text(text?.type === "text" ? text.text : "(no output)", 0, 0);
+			return withReapNotes(new Text(text?.type === "text" ? text.text : "(no output)", 0, 0));
 		},
 	});
 }
