@@ -8,6 +8,8 @@
  *
  *     ctx 45.2k/200k
  *
+ * The current count turns yellow at 60% of the window and red at 80%.
+ *
  * The number comes from ctx.getContextUsage(), the same source the built-in
  * percentage uses, so it stays consistent with the footer. Right after a
  * /compact the exact count is unknown until the next model response, so it
@@ -19,6 +21,7 @@
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { bandFor } from "./band.ts";
 
 const STATUS_KEY = "context-tokens";
 
@@ -41,7 +44,9 @@ export default function (pi: ExtensionAPI) {
 		const window = formatTokens(usage.contextWindow);
 		// tokens is null right after a compaction until the next model response.
 		const current = usage.tokens === null ? "?" : formatTokens(usage.tokens);
-		ctx.ui.setStatus(STATUS_KEY, `ctx ${current}/${window}`);
+		const band = bandFor(usage.tokens, usage.contextWindow);
+		const coloured = band ? ctx.ui.theme.fg(band, current) : current;
+		ctx.ui.setStatus(STATUS_KEY, `ctx ${coloured}/${window}`);
 	};
 
 	// Refresh whenever context size can change.

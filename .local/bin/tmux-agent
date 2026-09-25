@@ -13,11 +13,11 @@ AGENT="${TMUX_AGENT_DEFAULT:-pi}"
 AGENTS=("pi")   # registered agents; picker (Task 4) activates when >1
 
 # Build the command to launch AGENT for a given context mode.
-# Args: name, mode (fresh|handoff|fork), payload (task text | doc path | session id), launch (auto|wait)
+# Args: name, mode (fresh|handoff|fork), payload (task text | doc path | session id), launch (auto|wait), persona (comma-separated, may be empty)
 # Echoes the command string to run as the window/session command.
-# For "wait" launch, the payload is NOT included here; it is sent later via send-keys.
+# For "wait" launch, the payload is NOT included here; it is typed into the pane later.
 agent_build_cmd() {
-    local name="$1" mode="$2" payload="$3" launch="$4"
+    local name="$1" mode="$2" payload="$3" launch="$4" persona="${5:-}"
     case "$AGENT" in
         pi)
             # Mirror the interactive pi() wrapper in .zshrc: launch with
@@ -28,19 +28,23 @@ agent_build_cmd() {
             # escape hatch the wrapper uses.
             local ns="--no-skills "
             [[ -n "${PI_ALL_SKILLS:-}" ]] && ns=""
+            # A forked session restores the persona it was saved with, so the
+            # flag would be dead weight there; the caller is warned instead.
+            local pf=""
+            [[ -n "$persona" && "$mode" != fork ]] && pf="$(printf -- '--persona %q ' "$persona")"
             case "$mode" in
                 fresh)
                     if [[ "$launch" == auto && -n "$payload" ]]; then
-                        printf 'pi %s-n %q %q' "$ns" "$name" "$payload"
+                        printf 'pi %s%s-n %q %q' "$ns" "$pf" "$name" "$payload"
                     else
-                        printf 'pi %s-n %q' "$ns" "$name"
+                        printf 'pi %s%s-n %q' "$ns" "$pf" "$name"
                     fi
                     ;;
                 handoff)
                     if [[ "$launch" == auto ]]; then
-                        printf 'pi %s-n %q @%q' "$ns" "$name" "$payload"
+                        printf 'pi %s%s-n %q @%q' "$ns" "$pf" "$name" "$payload"
                     else
-                        printf 'pi %s-n %q' "$ns" "$name"
+                        printf 'pi %s%s-n %q' "$ns" "$pf" "$name"
                     fi
                     ;;
                 fork)
@@ -55,7 +59,7 @@ agent_build_cmd() {
     esac
 }
 
-# Echo the text that should be sent via send-keys in "wait" mode (no Enter).
+# Echo the text to type into the pane in "wait" mode (no Enter).
 # Args: mode, payload
 agent_wait_text() {
     local mode="$1" payload="$2"
@@ -97,6 +101,7 @@ ARG_WORKDIR=""     # pre-selected working directory
 ARG_NAME=""        # pre-selected window/session name
 ARG_PLACEMENT=""   # pre-selected placement (window|session)
 ARG_LAUNCH=""      # pre-selected launch (auto|wait)
+ARG_PERSONA=""     # comma-separated persona(s) for the new agent
 NO_PROMPT=""       # when set, never call fzf; use flags/defaults only
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -108,6 +113,7 @@ while [[ $# -gt 0 ]]; do
         --name)      ARG_NAME="$2"; shift 2 ;;
         --placement) ARG_PLACEMENT="$2"; shift 2 ;;
         --launch)    ARG_LAUNCH="$2"; shift 2 ;;
+        --persona)   ARG_PERSONA="$2"; shift 2 ;;
         --agent)     AGENT="$2"; shift 2 ;;
         --no-prompt) NO_PROMPT=1; shift ;;
         *) echo "tmux-agent: unknown arg '$1'" >&2; exit 2 ;;
@@ -127,6 +133,24 @@ slugify() {
 
 # Sanitise an arbitrary string into a tmux window/session name.
 sanitize_name() { printf '%s' "$1" | tr "./ " "___" ; }
+
+# Type text into a pane as literal keystrokes, newlines as the editor's
+# newline key. Plain typed text survives the editor swaps that gut a bracketed
+# paste (pi copies editor text without the paste buffer, leaving a dangling
+# "[paste #N]" marker). Chunked to stay under tmux's command size limit.
+# Args: target, text
+type_into_pane() {
+    local target="$1" text="$2" line chunk first=1
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ "$first" == 1 ]] || tmux send-keys -t "$target" C-j
+        first=0
+        while [[ -n "$line" ]]; do
+            chunk="${line:0:2000}"
+            line="${line:2000}"
+            tmux send-keys -t "$target" -l -- "$chunk"
+        done
+    done <<< "$text"
+}
 
 # ---------------------------------------------------------------------------
 # Prompt flow
@@ -253,7 +277,7 @@ fi
 # ---------------------------------------------------------------------------
 # Build command and spawn
 # ---------------------------------------------------------------------------
-CMD="$(agent_build_cmd "$NAME" "$MODE" "$PAYLOAD" "$LAUNCH")"
+CMD="$(agent_build_cmd "$NAME" "$MODE" "$PAYLOAD" "$LAUNCH" "$ARG_PERSONA")"
 CUR_SESSION="$(tmux display-message -p '#S')"
 
 if [[ "$PLACEMENT" == window ]]; then
@@ -269,18 +293,33 @@ else
     TARGET="$NAME"
 fi
 
-# Wait mode: pre-fill the input without sending. Poll until the pane's
-# foreground command is the agent (pi), then literal-send the text, no Enter.
+# Wait mode: pre-fill the input without sending. Poll the pane's tty until the
+# agent has put it in raw mode: a canonical-mode tty silently discards input
+# past 1024 bytes, which truncates long tasks. Then type the text and confirm
+# its tail reached the editor, retrying on a lost or partial delivery.
 if [[ "$LAUNCH" == wait ]]; then
     wait_text="$(agent_wait_text "$MODE" "$PAYLOAD")"
     if [[ -n "$wait_text" ]]; then
-        for _ in $(seq 1 50); do            # up to ~5s
-            fg="$(tmux display-message -p -t "$TARGET" '#{pane_current_command}' 2>/dev/null || true)"
-            [[ "$fg" == "$AGENT" || "$fg" == node ]] && break
+        for _ in $(seq 1 100); do            # up to ~10s
+            pane_tty="$(tmux display-message -p -t "$TARGET" '#{pane_tty}' 2>/dev/null || true)"
+            [[ -n "$pane_tty" ]] && stty -f "$pane_tty" -a 2>/dev/null | grep -q -- '-icanon' && break
             sleep 0.1
         done
-        sleep 0.3                            # small grace for the TUI to bind input
-        tmux send-keys -t "$TARGET" -l "$wait_text"
+        tail_probe="$(printf '%s' "$wait_text" | tail -n 1 | tail -c 24)"
+        for _ in 1 2 3; do
+            type_into_pane "$TARGET" "$wait_text"
+            delivered=""
+            for _ in $(seq 1 24); do          # up to ~6s for the TUI to catch up
+                sleep 0.25
+                if tmux capture-pane -p -J -t "$TARGET" | grep -qF "$tail_probe"; then
+                    delivered=1
+                    break
+                fi
+            done
+            [[ -n "$delivered" ]] && break
+            tmux send-keys -t "$TARGET" C-c   # drop a partial attempt
+            sleep 1
+        done
     fi
 fi
 

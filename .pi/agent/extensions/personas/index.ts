@@ -13,6 +13,7 @@
  * In session:
  *           /persona                 show active + available
  *           /persona list            list all personas with descriptions
+ *           /persona skills          list the skills resolved from the active set
  *           /persona set a,b         replace the active set
  *           /persona add name        add a persona (union)
  *           /persona remove name     drop a persona
@@ -40,6 +41,7 @@ import {
 } from "node:fs";
 import { homedir } from "node:os";
 import { basename, isAbsolute, join, resolve } from "node:path";
+import { expandPath, resolvePromptValue } from "./prompt-source.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -53,7 +55,10 @@ interface PersonaDef {
 	exclude?: string[];
 	model?: string;
 	thinking?: string;
+	/** Literal text, or `@<path>` to a markdown file whose body is appended. */
 	appendSystemPrompt?: string;
+	/** Directory of the personas.json that defined this persona. Stamped at load time. */
+	baseDir?: string;
 }
 
 interface PersonasConfig {
@@ -67,6 +72,7 @@ interface Activation {
 	skillDirs: string[];
 	usedAll: boolean;
 	missing: string[];
+	promptErrors: string[];
 	model?: string;
 	thinking?: string;
 	prompt: string;
@@ -76,9 +82,9 @@ const STATE_TYPE = "personas:state";
 const BASELINE_TYPE = "personas:baseline";
 const DEFAULT_ROOTS = [
 	"~/.pi/agent/skills",
-	"~/.local/share/superpowers/skills",
 	"~/.local/share/caveman/skills",
 	"~/.pi/agent/npm/node_modules/*/skills",
+	"~/.pi/agent/git/*/*/*/skills",
 ];
 
 // ---------------------------------------------------------------------------
@@ -107,13 +113,6 @@ function globMatch(pattern: string, value: string): boolean {
 		if (value.length - last.length < idx) return false;
 	}
 	return true;
-}
-
-function expandPath(p: string): string {
-	let out = p.trim();
-	if (out === "~") out = homedir();
-	else if (out.startsWith("~/")) out = join(homedir(), out.slice(2));
-	return out;
 }
 
 /** Expand a root that may contain `*` segments (one or more) into existing dirs. */
@@ -173,14 +172,31 @@ function readJson(path: string): PersonasConfig | undefined {
 	}
 }
 
+/** Record where each persona came from so relative `@paths` resolve predictably. */
+function stampBaseDir(
+	personas: Record<string, PersonaDef> | undefined,
+	dir: string,
+): Record<string, PersonaDef> {
+	const out: Record<string, PersonaDef> = {};
+	for (const [name, def] of Object.entries(personas ?? {}))
+		out[name] = { ...def, baseDir: dir };
+	return out;
+}
+
 function loadConfig(cwd: string): PersonasConfig {
-	const global = readJson(join(agentDir(), "personas.json")) ?? {};
-	const project = readJson(join(cwd, ".pi", "personas.json"));
+	const globalDir = agentDir();
+	const projectDir = join(cwd, ".pi");
+	const global = readJson(join(globalDir, "personas.json")) ?? {};
+	global.personas = stampBaseDir(global.personas, globalDir);
+	const project = readJson(join(projectDir, "personas.json"));
 	if (!project) return global;
 	return {
 		defaultPersona: project.defaultPersona ?? global.defaultPersona,
 		skillRoots: project.skillRoots ?? global.skillRoots,
-		personas: { ...(global.personas ?? {}), ...(project.personas ?? {}) },
+		personas: {
+			...global.personas,
+			...stampBaseDir(project.personas, projectDir),
+		},
 	};
 }
 
@@ -348,12 +364,14 @@ function flattenPersonas(
 	model?: string;
 	thinking?: string;
 	prompts: string[];
+	promptErrors: string[];
 	missing: string[];
 } {
 	const personas = config.personas ?? {};
 	const tokens: string[] = [];
 	const excludes: string[] = [];
 	const prompts: string[] = [];
+	const promptErrors: string[] = [];
 	const missing: string[] = [];
 	let model: string | undefined;
 	let thinking: string | undefined;
@@ -372,11 +390,17 @@ function flattenPersonas(
 		for (const e of def.exclude ?? []) excludes.push(e);
 		if (def.model) model = def.model; // last-writer wins
 		if (def.thinking) thinking = def.thinking;
-		if (def.appendSystemPrompt) prompts.push(def.appendSystemPrompt.trim());
+		if (def.appendSystemPrompt) {
+			const { text, error } = resolvePromptValue(def.appendSystemPrompt, {
+				baseDir: def.baseDir,
+			});
+			if (text) prompts.push(text);
+			if (error) promptErrors.push(`${name}: ${error}`);
+		}
 	};
 
 	for (const name of names) visit(name);
-	return { tokens, excludes, model, thinking, prompts, missing };
+	return { tokens, excludes, model, thinking, prompts, promptErrors, missing };
 }
 
 function resolveActivation(
@@ -384,7 +408,7 @@ function resolveActivation(
 	config: PersonasConfig,
 	index: SkillIndex,
 ): Activation {
-	const { tokens, excludes, model, thinking, prompts, missing } =
+	const { tokens, excludes, model, thinking, prompts, promptErrors, missing } =
 		flattenPersonas(names, config);
 	const missingSkills: string[] = [];
 	let usedAll = false;
@@ -431,6 +455,7 @@ function resolveActivation(
 		skillDirs,
 		usedAll,
 		missing: [...new Set([...missing, ...missingSkills])],
+		promptErrors,
 		model,
 		thinking,
 		prompt: prompts.filter(Boolean).join("\n\n"),
@@ -478,6 +503,11 @@ export default function (pi: ExtensionAPI) {
 
 	// Per-session cache. Cleared on shutdown so /reload recomputes cleanly.
 	let cache: { activation: Activation; config: PersonasConfig } | null = null;
+	// True once a persona pinned a model in THIS process. Gates the baseline
+	// restore below; pi.setModel() rewrites the global defaultModel in
+	// settings.json, so restoring a stale baseline on session_start would
+	// silently change the user's default for every future session.
+	let pinnedPersonaModel = false;
 
 	function computeActive(ctx: ExtensionContext): {
 		activation: Activation;
@@ -535,6 +565,18 @@ export default function (pi: ExtensionAPI) {
 		pi.appendEntry(BASELINE_TYPE, { model, thinking });
 	}
 
+	// Skips the call when the model already matches, because pi.setModel()
+	// persists provider+id as the global default in settings.json.
+	async function setModelIfChanged(
+		ctx: ExtensionContext,
+		model: { provider: string; id: string },
+	): Promise<boolean> {
+		if (ctx.model?.provider === model.provider && ctx.model?.id === model.id) {
+			return true;
+		}
+		return await pi.setModel(model as never);
+	}
+
 	async function applyModelAndThinking(
 		ctx: ExtensionContext,
 		activation: Activation,
@@ -559,21 +601,24 @@ export default function (pi: ExtensionAPI) {
 				? ctx.modelRegistry?.find(provider, id)
 				: undefined;
 			if (model) {
-				const ok = await pi.setModel(model);
-				if (!ok)
-					ctx.ui.notify(`persona: no API key for ${wantModel}`, "warn");
+				const ok = await setModelIfChanged(ctx, model);
+				if (ok) pinnedPersonaModel = true;
+				else ctx.ui.notify(`persona: no API key for ${wantModel}`, "warning");
 			} else {
 				ctx.ui.notify(
 					`persona: model "${wantModel}" not found (use "provider/id")`,
-					"warn",
+					"warning",
 				);
 			}
-		} else if (ctx.hasUI && baseline?.model) {
+		} else if (ctx.hasUI && pinnedPersonaModel && baseline?.model) {
 			const model = ctx.modelRegistry?.find(
 				baseline.model.provider,
 				baseline.model.id,
 			);
-			if (model) await pi.setModel(model);
+			if (model) {
+				await setModelIfChanged(ctx, model);
+				pinnedPersonaModel = false;
+			}
 		}
 
 		// Thinking: persona override, else restore baseline.
@@ -625,6 +670,7 @@ export default function (pi: ExtensionAPI) {
 			console.error(
 				`[personas] active=[${activation.names.join(",")}] usedAll=${activation.usedAll} ` +
 					`skillDirs=${activation.skillDirs.length} missing=[${activation.missing.join(",")}] ` +
+					`promptErrors=[${activation.promptErrors.join("; ")}] ` +
 					`model=${activation.model ?? "-"} thinking=${activation.thinking ?? "-"}`,
 			);
 			for (const d of activation.skillDirs) console.error(`[personas]   ${d}`);
@@ -638,9 +684,11 @@ export default function (pi: ExtensionAPI) {
 			if (activation.missing.length) {
 				ctx.ui.notify(
 					`persona: unknown ${activation.missing.join(", ")}`,
-					"warn",
+					"warning",
 				);
 			}
+			for (const err of activation.promptErrors)
+				ctx.ui.notify(`persona: ${err}`, "warning");
 		}
 	});
 
@@ -667,6 +715,30 @@ export default function (pi: ExtensionAPI) {
 		return lines.join("\n");
 	}
 
+	function skillsText(activation: Activation): string {
+		const label = activation.names.length
+			? activation.names.join(", ")
+			: "(none)";
+		if (!activation.skillDirs.length)
+			return `Active: ${label}\nNo skills loaded.`;
+		const home = homedir();
+		const rows: [string, string][] = [];
+		for (const d of activation.skillDirs) {
+			// Single-file .md skills have no SKILL.md; dirs may carry a
+			// frontmatter name that differs from the dir basename.
+			const name = d.endsWith(".md")
+				? basename(d, ".md")
+				: (frontmatterName(join(d, "SKILL.md")) ?? basename(d));
+			const shown = d.startsWith(home) ? `~${d.slice(home.length)}` : d;
+			rows.push([name, shown]);
+		}
+		rows.sort((a, b) => a[0].localeCompare(b[0]));
+		const width = Math.max(...rows.map((r) => r[0].length));
+		const body = rows.map(([n, p]) => `  ${n.padEnd(width)}  ${p}`).join("\n");
+		const count = `${rows.length} skill${rows.length === 1 ? "" : "s"}`;
+		return `Active: ${label}\n${count}:\n${body}`;
+	}
+
 	async function reloadWith(ctx: ExtensionCommandContext, names: string[]) {
 		const config = loadConfig(ctx.cwd);
 		const known = new Set(Object.keys(config.personas ?? {}));
@@ -687,27 +759,54 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerCommand("persona", {
 		description: "Show, switch, or combine skill personas",
+		// pi-tui replaces the ENTIRE argument text (everything after "/persona ")
+		// with the selected item's `value`. Every value must therefore carry the
+		// full argument line, not just the completed token; otherwise picking a
+		// name after "add " drops the "add" and the command degrades to a
+		// destructive bare-name "set".
 		getArgumentCompletions: (prefix: string): AutocompleteItem[] | null => {
 			const config = loadConfig(process.cwd());
-			const parts = prefix.split(/\s+/);
-			const sub = parts[0] ?? "";
-			const subs = ["list", "set", "add", "remove", "reset", "show"];
-			// First token: suggest subcommands.
-			if (parts.length <= 1 && !subs.includes(sub)) {
-				const items = subs.map((s) => ({ value: s, label: s }));
-				const f = items.filter((i) => i.value.startsWith(sub));
-				return f.length ? f : items;
+			const subs = ["list", "skills", "set", "add", "remove", "reset", "show"];
+
+			// First token still being typed (no whitespace yet): suggest subcommands.
+			// Trailing space in the value flows straight into persona-name completion.
+			if (!/\s/.test(prefix)) {
+				const f = subs
+					.filter((s) => s.startsWith(prefix))
+					.map((s) => ({ value: `${s} `, label: s }));
+				// Exact, unambiguous token (e.g. "add"): close the menu so Enter/Tab
+				// can't rewrite it. Never fall back to unrelated items.
+				if (f.length === 1 && f[0].label === prefix) return null;
+				return f.length ? f : null;
 			}
-			// Later tokens: suggest persona names.
-			const last = parts.at(-1) ?? "";
-			const names = Object.keys(config.personas ?? {});
-			const items = names.map((n) => ({
-				value: n,
-				label: n,
-				description: config.personas?.[n]?.description,
-			}));
-			const f = items.filter((i) => i.value.startsWith(last));
-			return f.length ? f : items;
+
+			// Later tokens: complete persona names while PRESERVING everything
+			// already typed. Only the final comma-segment of the final token is
+			// completed, so "set a,ob" completes to "set a,observability".
+			const m = prefix.match(/^(.*[\s,])?([^\s,]*)$/);
+			const head = m?.[1] ?? "";
+			const partial = m?.[2] ?? "";
+
+			const sub = (prefix.split(/\s+/)[0] ?? "").toLowerCase();
+			const active = cache?.activation.names ?? [];
+			const typed = new Set(head.split(/[\s,]+/).filter(Boolean));
+
+			let names = Object.keys(config.personas ?? {});
+			if (sub === "add") names = names.filter((n) => !active.includes(n));
+			if ((sub === "remove" || sub === "rm") && active.length)
+				names = names.filter((n) => active.includes(n));
+			names = names.filter((n) => !typed.has(n));
+
+			const f = names
+				.filter((n) => n.startsWith(partial))
+				.map((n) => ({
+					value: `${head}${n}`,
+					label: n,
+					description: config.personas?.[n]?.description,
+				}));
+			// Exact match already typed: close the menu so Enter submits.
+			if (f.length === 1 && f[0].label === partial) return null;
+			return f.length ? f : null;
 		},
 		handler: async (args: string, ctx: ExtensionCommandContext) => {
 			const config = loadConfig(ctx.cwd);
@@ -730,6 +829,10 @@ export default function (pi: ExtensionAPI) {
 				}
 				case "list": {
 					ctx.ui.notify(listText(config, active), "info");
+					return;
+				}
+				case "skills": {
+					ctx.ui.notify(skillsText(computeActive(ctx).activation), "info");
 					return;
 				}
 				case "set": {

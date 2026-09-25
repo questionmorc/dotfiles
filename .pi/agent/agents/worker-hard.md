@@ -1,7 +1,7 @@
 ---
-name: worker
-description: General-purpose subagent with full capabilities, isolated context. Default for scoped tickets with a narrowed file list
-model: litellm/gpt-6-astra:low
+name: worker-hard
+description: "Worker for wide-context tickets: large unfamiliar surface, broad refactors, or briefs that cannot be narrowed to a short file list"
+model: litellm/gpt-6-astra:high
 persona: sub-worker
 ---
 

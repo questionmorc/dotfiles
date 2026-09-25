@@ -1,17 +1,25 @@
 {
-  "lastChangelogVersion": "0.80.3",
+  "lastChangelogVersion": "0.87.1",
   "theme": "tokyonight-storm",
   "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-4-8",
+  "defaultModel": "claude-opus-5-5",
   "defaultThinkingLevel": "xhigh",
+  "httpIdleTimeoutMs": 60000,
+  "retry": {
+    "enabled": true,
+    "maxRetries": 3,
+    "baseDelayMs": 1000
+  },
   "packages": [
     "npm:pi-provider-litellm",
     "npm:pi-mcp-adapter",
-    "npm:pi-lens",
-    "npm:pi-web-access"
+    "npm:pi-web-access",
+    {
+      "source": "git:github.com/obra/superpowers",
+      "extensions": []
+    }
   ],
   "skills": [
-    "~/.local/share/superpowers/skills",
     "~/.local/share/caveman/skills"
   ],
   "hideThinkingBlock": true

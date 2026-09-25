@@ -1,0 +1,20 @@
+{
+  "defaultToolset": "none",
+
+  "toolsets": {
+    "none": {
+      "description": "No direct MCP tools. Everything stays behind the mcp proxy.",
+      "mcp": []
+    },
+
+    "jira": {
+      "description": "All of mcp-rw-jira, direct. Nothing else.",
+      "mcp": ["mcp-rw-jira"]
+    },
+
+    "everything": {
+      "description": "Every tool on every server. ~104k tokens. Measure before you trust it.",
+      "mcp": ["*"]
+    }
+  }
+}

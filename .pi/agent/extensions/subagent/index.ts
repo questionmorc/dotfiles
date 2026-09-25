@@ -29,6 +29,13 @@ import {
 	killLiveChildren,
 	runChild,
 } from "./child-runner.js";
+import {
+	collectFinalText,
+	formatParallelContent,
+	PARALLEL_BUDGET_BYTES,
+	type ParallelEntry,
+	withCapWarning,
+} from "./result-format.js";
 
 const MAX_PARALLEL_TASKS = 8;
 const MAX_CONCURRENCY = 4;
@@ -66,6 +73,7 @@ function ensureChildReaperHooks(): void {
 // breaking subagents.
 // ---------------------------------------------------------------------------
 let isolatedAgentDir: string | null = null;
+let spillDir: string | null = null;
 
 function ensureIsolatedAgentDir(): string | null {
 	try {
@@ -264,15 +272,29 @@ function failureReason(result: SingleResult): string | undefined {
 }
 
 function getFinalOutput(messages: Message[]): string {
-	for (let i = messages.length - 1; i >= 0; i--) {
-		const msg = messages[i];
-		if (msg.role === "assistant") {
-			for (const part of msg.content) {
-				if (part.type === "text") return part.text;
-			}
-		}
+	return collectFinalText(messages);
+}
+
+/** True when the child's answer was cut off mid-stream by the model's output token ceiling. */
+function hitOutputCap(result: SingleResult): boolean {
+	return result.stopReason === "length";
+}
+
+function finalOutputForParent(result: SingleResult): string {
+	return withCapWarning(getFinalOutput(result.messages), hitOutputCap(result));
+}
+
+/** Persists a full subagent body so the parent can read past the parallel budget. */
+function spillOutput(agent: string, index: number, body: string): string | undefined {
+	try {
+		if (!spillDir) spillDir = fs.mkdtempSync(path.join(os.tmpdir(), "pi-subagent-out-"));
+		const safeName = agent.replace(/[^\w.-]+/g, "_");
+		const filePath = path.join(spillDir, `${index + 1}-${safeName}-${Date.now()}.md`);
+		fs.writeFileSync(filePath, body, { encoding: "utf-8", mode: 0o600 });
+		return filePath;
+	} catch {
+		return undefined;
 	}
-	return "";
 }
 
 type DisplayItem = { type: "text"; text: string } | { type: "toolCall"; name: string; args: Record<string, any> };
@@ -509,6 +531,7 @@ export default function (pi: ExtensionAPI) {
 		description: [
 			"Delegate tasks to specialized subagents with isolated context.",
 			"Modes: single (agent + task), parallel (tasks array), chain (sequential with {previous} placeholder).",
+			`Parallel returns every task's full output, sharing a ${PARALLEL_BUDGET_BYTES / 1024}KB budget; a task over its share is clipped and its full text written to a file whose path is given inline.`,
 			'Default agent scope is "user" (from ~/.pi/agent/agents).',
 			'To enable project-local agents in .pi/agents, set agentScope: "both" (or "project").',
 		].join(" "),
@@ -622,10 +645,10 @@ export default function (pi: ExtensionAPI) {
 							isError: true,
 						};
 					}
-					previousOutput = getFinalOutput(result.messages);
+					previousOutput = finalOutputForParent(result);
 				}
 				return {
-					content: [{ type: "text", text: getFinalOutput(results[results.length - 1].messages) || "(no output)" }],
+					content: [{ type: "text", text: finalOutputForParent(results[results.length - 1]) || "(no output)" }],
 					details: makeDetails("chain")(results),
 				};
 			}
@@ -694,19 +717,20 @@ export default function (pi: ExtensionAPI) {
 					return result;
 				});
 
-				const successCount = results.filter((r) => !failureReason(r)).length;
-				const summaries = results.map((r) => {
-					const output = getFinalOutput(r.messages);
-					const preview = output.slice(0, 100) + (output.length > 100 ? "..." : "");
-					const reason = failureReason(r);
-					const status = reason ? `failed (${reason})` : "completed";
-					return `[${r.agent}] ${status}: ${preview || "(no output)"}`;
-				});
+				const entries: ParallelEntry[] = results.map((r) => ({
+					agent: r.agent,
+					output: r.errorMessage || getFinalOutput(r.messages) || r.stderr,
+					failureReason: failureReason(r),
+					outputCapped: hitOutputCap(r),
+				}));
 				return {
 					content: [
 						{
 							type: "text",
-							text: `Parallel: ${successCount}/${results.length} succeeded\n\n${summaries.join("\n\n")}`,
+							text: formatParallelContent(entries, {
+								budget: PARALLEL_BUDGET_BYTES,
+								spill: spillOutput,
+							}),
 						},
 					],
 					details: makeDetails("parallel")(results),
@@ -736,7 +760,7 @@ export default function (pi: ExtensionAPI) {
 					};
 				}
 				return {
-					content: [{ type: "text", text: getFinalOutput(result.messages) || "(no output)" }],
+					content: [{ type: "text", text: finalOutputForParent(result) || "(no output)" }],
 					details: makeDetails("single")([result]),
 				};
 			}
@@ -808,6 +832,7 @@ export default function (pi: ExtensionAPI) {
 			}
 
 			const mdTheme = getMarkdownTheme();
+			const capTag = (r: SingleResult) => (hitOutputCap(r) ? ` ${theme.fg("warning", "[output token limit]")}` : "");
 
 			const renderDisplayItems = (items: DisplayItem[], limit?: number) => {
 				const toShow = limit ? items.slice(-limit) : items;
@@ -835,7 +860,7 @@ export default function (pi: ExtensionAPI) {
 
 				if (expanded) {
 					const container = new Container();
-					let header = `${icon} ${theme.fg("toolTitle", theme.bold(r.agent))}${theme.fg("muted", ` (${r.agentSource})`)}`;
+					let header = `${icon} ${theme.fg("toolTitle", theme.bold(r.agent))}${theme.fg("muted", ` (${r.agentSource})`)}${capTag(r)}`;
 					if (reason) header += ` ${theme.fg("error", `[${reason}]`)}`;
 					container.addChild(new Text(header, 0, 0));
 					if (isError && r.errorMessage)
@@ -871,7 +896,7 @@ export default function (pi: ExtensionAPI) {
 					return withReapNotes(container);
 				}
 
-				let text = `${icon} ${theme.fg("toolTitle", theme.bold(r.agent))}${theme.fg("muted", ` (${r.agentSource})`)}`;
+				let text = `${icon} ${theme.fg("toolTitle", theme.bold(r.agent))}${theme.fg("muted", ` (${r.agentSource})`)}${capTag(r)}`;
 				if (reason) text += ` ${theme.fg("error", `[${reason}]`)}`;
 				if (isError && r.errorMessage) text += `\n${theme.fg("error", `Error: ${r.errorMessage}`)}`;
 				else if (displayItems.length === 0) text += `\n${theme.fg("muted", "(no output)")}`;
@@ -922,7 +947,7 @@ export default function (pi: ExtensionAPI) {
 						container.addChild(new Spacer(1));
 						container.addChild(
 							new Text(
-								`${theme.fg("muted", `─── Step ${r.step}: `) + theme.fg("accent", r.agent)} ${rIcon}`,
+								`${theme.fg("muted", `─── Step ${r.step}: `) + theme.fg("accent", r.agent)} ${rIcon}${capTag(r)}`,
 								0,
 								0,
 							),
@@ -968,7 +993,7 @@ export default function (pi: ExtensionAPI) {
 				for (const r of details.results) {
 					const rIcon = failureReason(r) ? theme.fg("error", "✗") : theme.fg("success", "✓");
 					const displayItems = getDisplayItems(r.messages);
-					text += `\n\n${theme.fg("muted", `─── Step ${r.step}: `)}${theme.fg("accent", r.agent)} ${rIcon}`;
+					text += `\n\n${theme.fg("muted", `─── Step ${r.step}: `)}${theme.fg("accent", r.agent)} ${rIcon}${capTag(r)}`;
 					if (displayItems.length === 0) text += `\n${theme.fg("muted", "(no output)")}`;
 					else text += `\n${renderDisplayItems(displayItems, 5)}`;
 				}
@@ -1010,7 +1035,7 @@ export default function (pi: ExtensionAPI) {
 
 						container.addChild(new Spacer(1));
 						container.addChild(
-							new Text(`${theme.fg("muted", "─── ") + theme.fg("accent", r.agent)} ${rIcon}`, 0, 0),
+							new Text(`${theme.fg("muted", "─── ") + theme.fg("accent", r.agent)} ${rIcon}${capTag(r)}`, 0, 0),
 						);
 						container.addChild(new Text(theme.fg("muted", "Task: ") + theme.fg("dim", r.task), 0, 0));
 
@@ -1053,7 +1078,7 @@ export default function (pi: ExtensionAPI) {
 							? theme.fg("error", "✗")
 							: theme.fg("success", "✓");
 					const displayItems = getDisplayItems(r.messages);
-					text += `\n\n${theme.fg("muted", "─── ")}${theme.fg("accent", r.agent)} ${rIcon}`;
+					text += `\n\n${theme.fg("muted", "─── ")}${theme.fg("accent", r.agent)} ${rIcon}${capTag(r)}`;
 					if (displayItems.length === 0)
 						text += `\n${theme.fg("muted", isStillRunning(r) ? "(running...)" : "(no output)")}`;
 					else text += `\n${renderDisplayItems(displayItems, 5)}`;

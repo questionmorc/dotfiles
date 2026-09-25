@@ -9,6 +9,7 @@
  * Usage:
  *   /spawn fork this into a window called auth-fix and wait
  *   /spawn fresh agent to write integration tests, new session, auto
+ *   /spawn fresh window with the superpowers persona to execute docs/plans/x.md
  *
  * The /spawn command routes your text to the agent, which extracts the params
  * and calls spawn_agent. The agent may ask a clarifying question only if the
@@ -27,6 +28,11 @@ import { StringEnum } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
+import {
+	knownPersonaNames,
+	personaConfigPaths,
+	resolvePersonaArg,
+} from "./personas.ts";
 
 const ENGINE = join(homedir(), ".local", "bin", "tmux-agent");
 
@@ -81,6 +87,12 @@ const SpawnParams = Type.Object({
 				"Absolute working directory for the new agent. Defaults to the current session's cwd.",
 		}),
 	),
+	persona: Type.Optional(
+		Type.String({
+			description:
+				"Persona(s) the new agent launches with, comma-separated (names from ~/.pi/agent/personas.json, e.g. 'superpowers'). Set this when the user names a persona or asks for a workflow a persona owns. mode=fork ignores it: a forked session keeps its own persona.",
+		}),
+	),
 });
 
 export default function (pi: ExtensionAPI) {
@@ -100,6 +112,22 @@ export default function (pi: ExtensionAPI) {
 			}
 
 			const flags = ["--no-prompt", "--mode", params.mode, "--placement", params.placement, "--launch", params.launch];
+
+			const known = knownPersonaNames(personaConfigPaths(ctx.cwd));
+			const { names: personas, unknown } = resolvePersonaArg(params.persona, known);
+			if (unknown.length) {
+				return {
+					content: [
+						{
+							type: "text",
+							text: `Error: unknown persona ${unknown.join(", ")}. Available: ${known.join(", ")}.`,
+						},
+					],
+					isError: true,
+				};
+			}
+			const personaIgnored = personas.length > 0 && params.mode === "fork";
+			if (personas.length && !personaIgnored) flags.push("--persona", personas.join(","));
 
 			// Workdir: explicit or current cwd.
 			const workdir = params.workdir?.trim() || ctx.cwd;
@@ -140,21 +168,34 @@ export default function (pi: ExtensionAPI) {
 				};
 			}
 
+			const personaNote = personaIgnored
+				? ` Persona ${personas.join(",")} ignored: a forked session keeps the persona it was saved with (use mode=fresh, or /persona set in the new window).`
+				: personas.length
+					? ` Persona: ${personas.join(",")}.`
+					: "";
+
 			return {
 				content: [
 					{
 						type: "text",
-						text: `Spawned ${params.mode} agent in ${params.placement} "${name}" (launch=${params.launch}, cwd=${workdir}).`,
+						text: `Spawned ${params.mode} agent in ${params.placement} "${name}" (launch=${params.launch}, cwd=${workdir}).${personaNote}`,
 					},
 				],
-				details: { mode: params.mode, placement: params.placement, launch: params.launch, name, workdir },
+				details: {
+					mode: params.mode,
+					placement: params.placement,
+					launch: params.launch,
+					name,
+					workdir,
+					persona: personaIgnored ? undefined : personas.join(",") || undefined,
+				},
 			};
 		},
 	});
 
 	// /spawn routes freeform text to the agent, which parses it and calls spawn_agent.
 	pi.registerCommand("spawn", {
-		description: "Hand off to a new tmux agent. e.g. /spawn fork into a window called auth-fix and wait",
+		description: "Hand off to a new tmux agent. e.g. /spawn fresh window, superpowers persona, execute docs/plans/x.md",
 		handler: async (args, ctx) => {
 			if (!process.env.TMUX) {
 				ctx.ui.notify("/spawn requires running inside tmux", "error");
@@ -164,6 +205,7 @@ export default function (pi: ExtensionAPI) {
 			const instruction = request
 				? `The user wants to spawn a new tmux agent. Parse this request and call the spawn_agent tool: "${request}". ` +
 					"Infer mode (fork if they want this conversation's context, fresh otherwise), placement (window unless they say session), and launch (wait unless they say auto/immediately). " +
+					"If they name a persona (or a workflow one owns, e.g. superpowers for subagent-driven development), pass it as `persona`; personas apply to fresh spawns only. " +
 					"If a name is mentioned use it; otherwise omit it. Only ask a clarifying question if the request is genuinely ambiguous. Do not narrate, just call the tool."
 				: "The user ran /spawn with no arguments. Call the spawn_agent tool to hand off this session. Default to mode=fork, placement=window, launch=wait unless context suggests otherwise. Do not narrate, just call the tool.";
 

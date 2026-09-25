@@ -1,18 +1,20 @@
 {
-  "defaultPersona": "default",
+  "defaultPersona": "base",
   "skillRoots": [
     "~/.pi/agent/skills",
-    "~/.local/share/superpowers/skills",
+    "~/code/claude-skills",
     "~/.local/share/caveman/skills",
     "~/.pi/agent/npm/node_modules/*/skills",
-    "~/.pi/agent/npm/node_modules/@*/*/skills"
+    "~/.pi/agent/npm/node_modules/@*/*/skills",
+    "~/.pi/agent/git/*/*/*/skills"
   ],
   "personas": {
     "default": {
       "description": "Coding-focused DevOps/SWE toolkit: navigation, debugging, testing, review, planning.",
-      "extends": ["base"],
+      "extends": [
+        "base"
+      ],
       "skills": [
-        "~/.pi/agent/npm/node_modules/pi-lens/skills",
         "code-review",
         "implement",
         "tdd",
@@ -26,20 +28,24 @@
         "handoff",
         "humanizer",
         "caveman",
-        "git-guardrails-claude-code"
+        "git-guardrails-claude-code",
+        "clean-code",
+        "review-lenses"
       ]
     },
-
     "full": {
       "description": "Everything (all discovered skills, including superpowers).",
-      "skills": ["*"]
+      "skills": [
+        "*"
+      ]
     },
-
     "superpowers": {
       "description": "The superpowers workflow skills (brainstorming, TDD, planning, debugging, etc.).",
-      "skills": ["~/.local/share/superpowers/skills"]
+      "appendSystemPrompt": "@~/.pi/agent/git/github.com/obra/superpowers/skills/using-superpowers/SKILL.md",
+      "skills": [
+        "~/.pi/agent/git/github.com/obra/superpowers/skills"
+      ]
     },
-
     "pocock": {
       "description": "Matt Pocock's engineering skills (mattpocock/skills): specs, tickets, triage, review, TDD, architecture.",
       "skills": [
@@ -66,26 +72,28 @@
         "git-guardrails-claude-code"
       ]
     },
-
     "base": {
-      "description": "Lean foundation: navigation, research, the KB, and workflow hygiene. Meant to be extended.",
+      "description": "Lean foundation: research, the KB, prose hygiene, and workflow hygiene. Meant to be extended.",
       "skills": [
-        "pi-lens-ast-grep",
-        "pi-lens-lsp-navigation",
-        "librarian",
         "research",
+        "unity-kb",
+        "humanizer",
+        "handoff",
+        "grill-me",
+        "grilling"
+      ]
+    },
+    "minimal": {
+      "description": "Almost nothing. Just the KB. Cleanest possible context.",
+      "skills": [
         "unity-kb"
       ]
     },
-
-    "minimal": {
-      "description": "Almost nothing. Code navigation plus the KB. Cleanest possible context.",
-      "skills": ["pi-lens-ast-grep", "pi-lens-lsp-navigation", "unity-kb"]
-    },
-
     "unity-backend": {
       "description": "Unity Muse / AI Authoring backend work. Query the KB before touching code.",
-      "extends": ["base"],
+      "extends": [
+        "base"
+      ],
       "thinking": "high",
       "appendSystemPrompt": "Active persona: unity-backend. For anything touching Unity Muse, AI Authoring, Proton/Generators, Nibbler, AI-Config, Kronus, or the muse/muse-editor/proton-service repos, consult the unity-kb skill FIRST via the kb tools before exploring code.",
       "skills": [
@@ -103,11 +111,36 @@
         "domain-modeling"
       ]
     },
-
+    "billing": {
+      "description": "Credit pricing and cloud cost: measure the inputs, reconcile them, build the sheet.",
+      "extends": [
+        "base"
+      ],
+      "thinking": "high",
+      "appendSystemPrompt": "Active persona: billing. For any credit pricing, cost per credit, model spend, provisioned throughput or infra overhead question, use the credit-pricing-refresh skill and pass its golden gate before trusting a new number. Reconcile against a hand-checked window rather than asserting a figure. Flag modelling tensions instead of settling them quietly.",
+      "skills": [
+        "credit-pricing-refresh",
+        "unity-kb",
+        "gcx",
+        "explore-datasources",
+        "debug-with-grafana",
+        "gws-shared",
+        "gws-sheets",
+        "gws-sheets-read",
+        "gws-sheets-append",
+        "gws-docs",
+        "gws-docs-write",
+        "tdd",
+        "clean-code",
+        "diagnosing-bugs"
+      ]
+    },
     "observability": {
       "description": "Grafana debugging, dashboards, alerts, SLOs, gcx.",
-      "extends": ["base"],
-      "appendSystemPrompt": "Active persona: observability. Prefer Grafana MCP tools and the gcx workflow. Start diagnostics from datasources and alerts, not guesses.",
+      "extends": [
+        "base"
+      ],
+      "appendSystemPrompt": "Active persona: observability. Use the gcx CLI for all Grafana work: metrics, logs, traces, alerts, dashboards. Do not use the Grafana MCP server; where a skill says 'query via the Grafana MCP', translate it to the equivalent gcx command (gcx metrics query, gcx logs query, gcx traces query, gcx alert). Discover commands with gcx help-tree before guessing, and verify the context with gcx config check. Start diagnostics from datasources and alerts, not guesses.",
       "skills": [
         "debug-with-grafana",
         "explore-datasources",
@@ -121,7 +154,18 @@
         "scaffold-project"
       ]
     },
-
+    "on-call": {
+      "description": "On-call rotation: observability tooling plus the writing stack for incident notes and comms.",
+      "extends": [
+        "docs-writing",
+        "observability"
+      ],
+      "appendSystemPrompt": "Active persona: on-call. This supersedes the docs-writing and observability lines above; both toolsets are loaded. Check the KB runbook and recent alert history before forming a hypothesis, and read alerts and datasources before dashboards. Keep a timestamped log of what was observed, what was changed, and what is still unknown. Never mutate production to test a theory without saying so first. Write status updates as plain prose ready to paste into a channel. For the weekly handoff doc, use the oncall-handoff skill and gather every count from a query before writing. The oncall-handoff and production-debugging skills predate gcx and say 'Grafana MCP'; ignore that and use gcx, their datasource UIDs and PromQL patterns still apply verbatim.",
+      "skills": [
+        "oncall-handoff",
+        "production-debugging"
+      ]
+    },
     "dashboards": {
       "description": "Grafana dashboards-as-code (foundation-sdk, import/generate/manage).",
       "skills": [
@@ -130,21 +174,26 @@
         "generate-resource-stubs",
         "scaffold-project",
         "explore-datasources",
-        "gcx",
-        "pi-lens-ast-grep"
+        "gcx"
       ]
     },
-
     "terraform": {
       "description": "Terraform / OpenTofu infrastructure-as-code.",
-      "extends": ["base"],
+      "extends": [
+        "base"
+      ],
       "appendSystemPrompt": "Active persona: terraform. Follow the terraform-skill for module design, testing, and security scanning.",
-      "skills": ["terraform-skill", "diagnosing-bugs", "writing-plans"]
+      "skills": [
+        "terraform-skill",
+        "diagnosing-bugs",
+        "writing-plans"
+      ]
     },
-
     "architecture": {
       "description": "Deep module design, interface exploration, refactoring strategy.",
-      "extends": ["base"],
+      "extends": [
+        "base"
+      ],
       "thinking": "xhigh",
       "appendSystemPrompt": "Active persona: architecture. Think in terms of deep modules and clean seams. Design interfaces twice before committing.",
       "skills": [
@@ -158,10 +207,11 @@
         "grill-with-docs"
       ]
     },
-
     "planning": {
       "description": "Spec to plan to issues. Brainstorm, grill, write plans, cut tickets.",
-      "extends": ["base"],
+      "extends": [
+        "base"
+      ],
       "appendSystemPrompt": "Active persona: planning. Do not write implementation code. Produce specs, plans, and issues.",
       "skills": [
         "writing-plans",
@@ -175,7 +225,6 @@
         "subagent-driven-development"
       ]
     },
-
     "review": {
       "description": "Code review focused. Standards and spec review.",
       "skills": [
@@ -183,12 +232,9 @@
         "requesting-code-review",
         "receiving-code-review",
         "caveman-review",
-        "verification-before-completion",
-        "pi-lens-ast-grep",
-        "pi-lens-lsp-navigation"
+        "verification-before-completion"
       ]
     },
-
     "docs-writing": {
       "description": "Writing prose, docs, PRDs, and Google Workspace content.",
       "appendSystemPrompt": "Active persona: docs-writing. Follow the humanizer skill. No em-dashes, no filler, plain human phrasing.",
@@ -199,7 +245,6 @@
         "writing-plans",
         "to-spec",
         "to-tickets",
-        "librarian",
         "gws-shared",
         "gws-docs",
         "gws-docs-write",
@@ -210,19 +255,15 @@
         "gws-sheets-append"
       ]
     },
-
     "skill-authoring": {
       "description": "Building and editing agent skills.",
       "skills": [
         "writing-skills",
         "writing-great-skills",
         "find-skills",
-        "setup-matt-pocock-skills",
-        "pi-lens-write-ast-grep-rule",
-        "pi-lens-write-tree-sitter-rule"
+        "setup-matt-pocock-skills"
       ]
     },
-
     "caveman": {
       "description": "Token-efficient caveman mode toolset.",
       "thinking": "low",
@@ -234,6 +275,48 @@
         "caveman-help",
         "cavecrew",
         "compress"
+      ]
+    },
+    "sub-base": {
+      "description": "Shared base for pipeline subagents (scout/worker/reviewer). Meant to be extended.",
+      "skills": [
+        "caveman",
+        "unity-kb"
+      ]
+    },
+    "sub-scout": {
+      "description": "Scout subagent: codebase recon. Base only.",
+      "extends": [
+        "sub-base"
+      ]
+    },
+    "sub-worker": {
+      "description": "Worker subagent: TDD implementation with clean-code, debugging, and terraform support.",
+      "extends": [
+        "sub-base"
+      ],
+      "skills": [
+        "tdd",
+        "clean-code",
+        "diagnosing-bugs",
+        "terraform-skill"
+      ]
+    },
+    "sub-reviewer": {
+      "description": "Reviewer subagent: design, test, standards, and spec lenses.",
+      "extends": [
+        "sub-base"
+      ],
+      "skills": [
+        "clean-code",
+        "tdd",
+        "review-lenses"
+      ]
+    },
+    "sub-integrator": {
+      "description": "Git integrator subagent: merges worktree branches into an integration branch, verifies, cleans up. Never pushes.",
+      "extends": [
+        "sub-base"
       ]
     }
   }

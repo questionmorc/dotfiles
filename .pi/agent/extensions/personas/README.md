@@ -34,6 +34,7 @@ command pi ...           # bypass the function entirely (raw pi)
 ```
 /persona                 show active personas + the full list
 /persona list            list every persona with its description
+/persona skills          list the skills resolved from the active set (name + source path)
 /persona set a,b         replace the active set (reloads skills)
 /persona add name        add a persona to the active set (union)
 /persona remove name     drop a persona
@@ -44,6 +45,17 @@ Switching runs `/reload` under the hood, so the new skill set (and any model /
 thinking / prompt overrides) takes effect immediately. The active set is stored in
 the session, so it survives `/reload` and `/resume`.
 
+## Spawned agents
+
+New tmux agents can be launched with a persona: `spawn_agent`/`/spawn` take a
+`persona` parameter, `/dispatch` picks one from its driver, and the `tmux-agent`
+engine takes `--persona <names>`. This works for fresh spawns only. A forked
+session restores the persona stored in the session it forked from, so the flag is
+dropped there and the tool says so; use `/persona set` in the new window instead.
+
+Subagents get their persona from the `persona:` frontmatter key in
+`~/.pi/agent/agents/*.md`.
+
 ## Config
 
 `~/.pi/agent/personas.json` (symlinked from `~/.dotfiles/.pi/agent/personas.json`).
@@ -51,17 +63,17 @@ A project can override or extend it with `<project>/.pi/personas.json`.
 
 ```jsonc
 {
-  "defaultPersona": "default",          // used when no --persona is given
+  "defaultPersona": "base",            // used when no --persona is given
   "skillRoots": [                        // where skills are discovered
     "~/.pi/agent/skills",
-    "~/.local/share/superpowers/skills",
     "~/.local/share/caveman/skills",
-    "~/.pi/agent/npm/node_modules/*/skills"   // * expands one path segment
+    "~/.pi/agent/npm/node_modules/*/skills",  // * expands one path segment
+    "~/.pi/agent/git/*/*/*/skills"            // git-installed pi packages
   ],
   "personas": {
     "default": {                                          // coding-focused DevOps/SWE toolkit
       "extends": ["base"],
-      "skills": ["~/.pi/agent/npm/node_modules/pi-lens/skills", "code-review", "implement", "tdd"]
+      "skills": ["code-review", "implement", "tdd"]
     },
 
     "full": {
@@ -69,7 +81,9 @@ A project can override or extend it with `<project>/.pi/personas.json`.
     },
 
     "superpowers": {
-      "skills": ["~/.local/share/superpowers/skills"]    // a directory = all skills under it
+      // a directory = all skills under it
+      "skills": ["~/.pi/agent/git/github.com/obra/superpowers/skills"],
+      "appendSystemPrompt": "@~/.pi/agent/git/github.com/obra/superpowers/skills/using-superpowers/SKILL.md"
     },
 
     "example": {
@@ -78,7 +92,7 @@ A project can override or extend it with `<project>/.pi/personas.json`.
       "skills": ["unity-kb", "tdd", "gws-*"],   // by name, or a name glob
       "model": "anthropic/claude-opus-4-8",     // optional, "provider/id"
       "thinking": "high",                        // optional
-      "appendSystemPrompt": "Extra rules for this persona."  // optional, or "@/path/to/file.md"
+      "appendSystemPrompt": "Extra rules for this persona."  // optional, or "@~/path/to/file.md"
     }
   }
 }
@@ -93,7 +107,15 @@ Each entry in a persona's `skills` array can be:
 - `"*"` meaning **all** discovered skills
 - an **absolute or `~` path** to a skill directory, a `.md` file, or a **directory of
   skills** (a root): the latter expands to every skill under it, e.g.
-  `~/.local/share/superpowers/skills`
+  `~/.pi/agent/git/github.com/obra/superpowers/skills`
+
+### appendSystemPrompt
+
+Either literal text or `@<path>` to a markdown file. With `@`, the file body is
+appended (YAML frontmatter stripped), which lets a persona carry a long prompt
+without inlining it in JSON. `~` expands to `$HOME`; a relative path resolves
+against the directory of the `personas.json` that declared the persona. An
+unreadable path is skipped with a `persona:` warning at session start.
 
 ### Excluding skills
 
@@ -102,7 +124,7 @@ Each entry in a persona's `skills` array can be:
 except superpowers:
 
 ```json
-"most": { "skills": ["*"], "exclude": ["~/.local/share/superpowers/skills"] }
+"most": { "skills": ["*"], "exclude": ["~/.pi/agent/git/github.com/obra/superpowers/skills"] }
 ```
 
 Exclusions only affect the `*` wildcard. A skill listed **explicitly** by any active
@@ -119,14 +141,34 @@ Composition rules:
 - When no persona sets `model` / `thinking`, the extension restores your global
   defaults (captured once at first startup).
 
-## Known caveat: pi-lens
+## Package-contributed skills
 
-`pi-lens` contributes its own 4 skills (`ast-grep`, `lsp-navigation`,
-`write-ast-grep-rule`, `write-tree-sitter-rule`) through the same
-`resources_discover` mechanism, which is not affected by `--no-skills`. Those 4
-skills are therefore always present, regardless of the active persona. They are
-lightweight navigation utilities, so this is usually fine. To drop them entirely,
-launch with `--no-lens` (disables pi-lens for that session).
+A package extension can contribute skills through the same `resources_discover`
+mechanism this extension uses, and that path is not affected by `--no-skills`.
+Skills contributed that way are present regardless of the active persona, and a
+persona `exclude` will not drop them. pi has no hook for gating an extension
+itself: extensions load from `packages` before any persona is resolved, and no
+event lets one extension unload another.
+
+The lever is package filtering in `~/.pi/agent/settings.json` (see pi's
+`docs/packages.md`). Disable the package's extensions, then let a persona load its
+skills from the checkout. Superpowers is wired up this way:
+
+```json
+"packages": [
+  { "source": "git:github.com/obra/superpowers", "extensions": [] }
+]
+```
+
+That drops the vendor extension, which contributed the 14 skill paths on every
+launch and injected the whole `using-superpowers` skill (~1.1k tokens) into every
+session. `pi update --extensions` still keeps the checkout current, the
+`superpowers` persona loads the skills from it, and that persona's
+`appendSystemPrompt` reproduces the bootstrap only when it is active.
+
+Declared package skills (`pi.skills` in the package manifest) need no filter:
+`--no-skills` already suppresses them, so they stay available for escape-hatch
+runs without leaking into persona-gated ones.
 
 ## Debugging
 
@@ -142,6 +184,7 @@ PERSONAS_DEBUG=1 pi --persona unity-backend -p "hi"
 | Path | Purpose |
 |------|---------|
 | `~/.dotfiles/.pi/agent/extensions/personas/index.ts` | the extension |
+| `~/.dotfiles/.pi/agent/extensions/personas/prompt-source.ts` | `@file` / `~` path resolution for `appendSystemPrompt` |
 | `~/.dotfiles/.pi/agent/personas.json` | persona definitions |
 | `~/.pi/agent/extensions/personas` -> dotfiles | symlink so pi auto-discovers it |
 | `~/.pi/agent/personas.json` -> dotfiles | symlink so the extension finds config |
